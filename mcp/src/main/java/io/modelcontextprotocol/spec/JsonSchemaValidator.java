@@ -3,6 +3,10 @@
  */
 package io.modelcontextprotocol.spec;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import java.util.Map;
 
 /**
@@ -15,13 +19,15 @@ public interface JsonSchemaValidator {
 
 	/**
 	 * Represents the result of a validation operation.
-	 *
-	 * @param valid Indicates whether the validation was successful.
-	 * @param errorMessage An error message if the validation failed, otherwise null.
-	 * @param jsonStructuredOutput The text structured content in JSON format if the
-	 * validation was successful, otherwise null.
 	 */
-	public record ValidationResponse(boolean valid, String errorMessage, String jsonStructuredOutput) {
+
+	@RequiredArgsConstructor
+	@Getter
+	@EqualsAndHashCode
+	class ValidationResponse {
+		private final boolean valid;
+		private final String errorMessage;
+		private final String jsonStructuredOutput;
 
 		public static ValidationResponse asValid(String jsonStructuredOutput) {
 			return new ValidationResponse(true, null, jsonStructuredOutput);
