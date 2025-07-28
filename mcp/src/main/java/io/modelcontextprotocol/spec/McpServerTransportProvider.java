@@ -16,4 +16,27 @@ public interface McpServerTransportProvider extends McpServerTransportProviderBa
 	 */
 	void setSessionFactory(McpServerSession.Factory sessionFactory);
 
+	/**
+	 * Sends a notification to all connected clients.
+	 * @param method the name of the notification method to be called on the clients
+	 * @param params parameters to be sent with the notification
+	 * @return a Mono that completes when the notification has been broadcast
+	 */
+	Mono<Void> notifyClients(String method, Object params);
+
+	/**
+	 * Immediately closes all the transports with connected clients and releases any
+	 * associated resources.
+	 */
+	default void close() {
+		this.closeGracefully().subscribe();
+	}
+
+	/**
+	 * Gracefully closes all the transports with connected clients and releases any
+	 * associated resources asynchronously.
+	 * @return a {@link Mono<Void>} that completes when the connections have been closed.
+	 */
+	Mono<Void> closeGracefully();
+
 }

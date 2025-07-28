@@ -616,9 +616,7 @@ public interface McpServer {
 		 */
 		public AsyncSpecification<S> resourceTemplates(ResourceTemplate... resourceTemplates) {
 			Assert.notNull(resourceTemplates, "Resource templates must not be null");
-			for (ResourceTemplate resourceTemplate : resourceTemplates) {
-				this.resourceTemplates.add(resourceTemplate);
-			}
+            this.resourceTemplates.addAll(Arrays.asList(resourceTemplates));
 			return this;
 		}
 
@@ -1212,9 +1210,7 @@ public interface McpServer {
 		 */
 		public SyncSpecification<S> resourceTemplates(ResourceTemplate... resourceTemplates) {
 			Assert.notNull(resourceTemplates, "Resource templates must not be null");
-			for (ResourceTemplate resourceTemplate : resourceTemplates) {
-				this.resourceTemplates.add(resourceTemplate);
-			}
+            this.resourceTemplates.addAll(Arrays.asList(resourceTemplates));
 			return this;
 		}
 

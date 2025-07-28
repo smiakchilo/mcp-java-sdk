@@ -136,7 +136,7 @@ public class McpSyncServerExchange {
 
 	/**
 	 * Sends a synchronous ping request to the client.
-	 * @return
+	 * @return The response from the client
 	 */
 	public Object ping() {
 		return this.exchange.ping().block();

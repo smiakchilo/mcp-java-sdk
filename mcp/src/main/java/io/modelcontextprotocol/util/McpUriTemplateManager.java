@@ -47,6 +47,6 @@ public interface McpUriTemplateManager {
 	 * Check if the given URI is a URI template.
 	 * @return Returns true if the URI contains variables in the format {variableName}
 	 */
-	public boolean isUriTemplate(String uri);
+	boolean isUriTemplate(String uri);
 
 }

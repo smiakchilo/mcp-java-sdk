@@ -72,11 +72,11 @@ public class DefaultJsonSchemaValidator implements JsonSchemaValidator {
 
 		}
 		catch (JsonProcessingException e) {
-			logger.error("Failed to validate CallToolResult: Error parsing schema: {}", e);
+			logger.error("Failed to validate CallToolResult: Error parsing schema", e);
 			return ValidationResponse.asInvalid("Error parsing tool JSON Schema: " + e.getMessage());
 		}
 		catch (Exception e) {
-			logger.error("Failed to validate CallToolResult: Unexpected error: {}", e);
+			logger.error("Failed to validate CallToolResult: Unexpected error", e);
 			return ValidationResponse.asInvalid("Unexpected validation error: " + e.getMessage());
 		}
 	}

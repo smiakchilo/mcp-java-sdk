@@ -338,9 +338,7 @@ public class McpAsyncClient {
 	 * @return A Mono that completes when the connection is closed
 	 */
 	public Mono<Void> closeGracefully() {
-		return Mono.defer(() -> {
-			return this.initializer.closeGracefully().then(transport.closeGracefully());
-		});
+		return Mono.defer(() -> this.initializer.closeGracefully().then(transport.closeGracefully()));
 	}
 
 	// --------------------------
@@ -475,8 +473,7 @@ public class McpAsyncClient {
 			@SuppressWarnings("unused")
 			McpSchema.PaginatedRequest request = transport.unmarshalFrom(params, PAGINATED_REQUEST_TYPE_REF);
 
-			List<Root> roots = this.roots.values().stream().toList();
-
+			List<Root> roots = new ArrayList<>(this.roots.values());
 			return Mono.just(new McpSchema.ListRootsResult(roots));
 		};
 	}

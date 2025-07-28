@@ -203,14 +203,14 @@ public class McpClientSession implements McpSession {
 	}
 
 	private MethodNotFoundError getMethodNotFoundError(String method) {
-		switch (method) {
-			case McpSchema.METHOD_ROOTS_LIST:
-				return new MethodNotFoundError(method, "Roots not supported",
-						Map.of("reason", "Client does not have roots capability"));
-			default:
-				return new MethodNotFoundError(method, "Method not found: " + method, null);
-		}
-	}
+        if (McpSchema.METHOD_ROOTS_LIST.equals(method)) {
+            return new MethodNotFoundError(
+					method,
+					"Roots not supported",
+                    Map.of("reason", "Client does not have roots capability"));
+        }
+        return new MethodNotFoundError(method, "Method not found: " + method, null);
+    }
 
 	/**
 	 * Handles an incoming JSON-RPC notification by routing it to the appropriate handler.
@@ -254,11 +254,12 @@ public class McpClientSession implements McpSession {
 			this.pendingResponses.put(requestId, pendingResponseSink);
 			McpSchema.JSONRPCRequest jsonrpcRequest = new McpSchema.JSONRPCRequest(McpSchema.JSONRPC_VERSION, method,
 					requestId, requestParams);
-			this.transport.sendMessage(jsonrpcRequest).contextWrite(ctx).subscribe(v -> {
-			}, error -> {
-				this.pendingResponses.remove(requestId);
-				pendingResponseSink.error(error);
-			});
+			this.transport.sendMessage(jsonrpcRequest).contextWrite(ctx).subscribe(
+					v -> {},
+					error -> {
+						this.pendingResponses.remove(requestId);
+						pendingResponseSink.error(error);
+					});
 		})).timeout(this.requestTimeout).handle((jsonRpcResponse, deliveredResponseSink) -> {
 			if (jsonRpcResponse.error() != null) {
 				logger.error("Error handling request: {}", jsonRpcResponse.error());

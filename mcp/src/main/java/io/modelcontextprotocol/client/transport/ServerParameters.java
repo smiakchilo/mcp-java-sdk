@@ -36,7 +36,7 @@ public class ServerParameters {
 	private String command;
 
 	@JsonProperty("args")
-	private List<String> args = new ArrayList<>();
+	private List<String> args;
 
 	@JsonProperty("env")
 	private Map<String, String> env;
@@ -71,11 +71,11 @@ public class ServerParameters {
 
 	public static class Builder {
 
-		private String command;
+		private final String command;
 
 		private List<String> args = new ArrayList<>();
 
-		private Map<String, String> env = new HashMap<>();
+		private final Map<String, String> env = new HashMap<>();
 
 		public Builder(String command) {
 			Assert.notNull(command, "The command can not be null");
@@ -108,8 +108,8 @@ public class ServerParameters {
 		}
 
 		public Builder addEnvVar(String key, String value) {
-			Assert.notNull(key, "The key can not be null");
-			Assert.notNull(value, "The value can not be null");
+			Assert.notNull(key, "The key cannot be null");
+			Assert.notNull(value, "The value cannot be null");
 			this.env.put(key, value);
 			return this;
 		}

@@ -14,16 +14,18 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
-import io.modelcontextprotocol.spec.DefaultMcpStreamableServerSessionFactory;
-import io.modelcontextprotocol.spec.McpServerTransportProviderBase;
-import io.modelcontextprotocol.spec.McpStreamableServerTransportProvider;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.modelcontextprotocol.spec.DefaultMcpStreamableServerSessionFactory;
+import io.modelcontextprotocol.spec.McpServerTransportProviderBase;
+import io.modelcontextprotocol.spec.McpStreamableServerTransportProvider;
 import io.modelcontextprotocol.spec.JsonSchemaValidator;
 import io.modelcontextprotocol.spec.McpClientSession;
 import io.modelcontextprotocol.spec.McpError;
@@ -37,7 +39,6 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpServerSession;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import io.modelcontextprotocol.util.Assert;
-import io.modelcontextprotocol.util.DeafaultMcpUriTemplateManagerFactory;
 import io.modelcontextprotocol.util.McpUriTemplateManagerFactory;
 import io.modelcontextprotocol.util.Utils;
 import reactor.core.publisher.Flux;
@@ -95,9 +96,17 @@ public class McpAsyncServer {
 
 	private final JsonSchemaValidator jsonSchemaValidator;
 
-	private final McpSchema.ServerCapabilities serverCapabilities;
+    /**
+     * Get the server capabilities that define the supported features and functionality.
+     */
+    @Getter
+    private final McpSchema.ServerCapabilities serverCapabilities;
 
-	private final McpSchema.Implementation serverInfo;
+    /**
+     * Get the server implementation information.
+     */
+    @Getter
+    private final McpSchema.Implementation serverInfo;
 
 	private final String instructions;
 
@@ -117,7 +126,7 @@ public class McpAsyncServer {
 
 	private List<String> protocolVersions = List.of(McpSchema.LATEST_PROTOCOL_VERSION);
 
-	private McpUriTemplateManagerFactory uriTemplateManagerFactory = new DeafaultMcpUriTemplateManagerFactory();
+	private final McpUriTemplateManagerFactory uriTemplateManagerFactory;
 
 	/**
 	 * Create a new McpAsyncServer with the given transport provider and capabilities.
@@ -261,23 +270,7 @@ public class McpAsyncServer {
 		});
 	}
 
-	/**
-	 * Get the server capabilities that define the supported features and functionality.
-	 * @return The server capabilities
-	 */
-	public McpSchema.ServerCapabilities getServerCapabilities() {
-		return this.serverCapabilities;
-	}
-
-	/**
-	 * Get the server implementation information.
-	 * @return The server implementation details
-	 */
-	public McpSchema.Implementation getServerInfo() {
-		return this.serverInfo;
-	}
-
-	/**
+    /**
 	 * Gracefully closes the server, allowing any in-progress operations to complete.
 	 * @return A Mono that completes when the server has been closed
 	 */
@@ -397,9 +390,9 @@ public class McpAsyncServer {
 				// Validate the result against the output schema
 				var validation = this.jsonSchemaValidator.validate(outputSchema, result.structuredContent());
 
-				if (!validation.valid()) {
-					logger.warn("Tool call result validation failed: {}", validation.errorMessage());
-					return new CallToolResult(validation.errorMessage(), true);
+				if (!validation.isValid()) {
+					logger.warn("Tool call result validation failed: {}", validation.getErrorMessage());
+					return new CallToolResult(validation.getErrorMessage(), true);
 				}
 
 				if (Utils.isEmpty(result.content())) {
@@ -409,7 +402,7 @@ public class McpAsyncServer {
 					// TextContent block.)
 					// https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
 
-					return new CallToolResult(List.of(new McpSchema.TextContent(validation.jsonStructuredOutput())),
+					return new CallToolResult(List.of(new McpSchema.TextContent(validation.getJsonStructuredOutput())),
 							result.isError(), result.structuredContent());
 				}
 
@@ -426,7 +419,10 @@ public class McpAsyncServer {
 			return tools;
 		}
 
-		return tools.stream().map(tool -> withStructuredOutputHandling(jsonSchemaValidator, tool)).toList();
+		return tools
+				.stream()
+				.map(tool -> withStructuredOutputHandling(jsonSchemaValidator, tool))
+				.collect(Collectors.toList());
 	}
 
 	private static McpServerFeatures.AsyncToolSpecification withStructuredOutputHandling(
@@ -486,7 +482,10 @@ public class McpAsyncServer {
 
 	private McpRequestHandler<McpSchema.ListToolsResult> toolsListRequestHandler() {
 		return (exchange, params) -> {
-			List<Tool> tools = this.tools.stream().map(McpServerFeatures.AsyncToolSpecification::tool).toList();
+			List<Tool> tools = this.tools
+					.stream()
+					.map(McpServerFeatures.AsyncToolSpecification::tool)
+					.collect(Collectors.toList());
 
 			return Mono.just(new McpSchema.ListToolsResult(tools, null));
 		};
@@ -495,8 +494,8 @@ public class McpAsyncServer {
 	private McpRequestHandler<CallToolResult> toolsCallRequestHandler() {
 		return (exchange, params) -> {
 			McpSchema.CallToolRequest callToolRequest = objectMapper.convertValue(params,
-					new TypeReference<McpSchema.CallToolRequest>() {
-					});
+                    new TypeReference<>() {
+                    });
 
 			Optional<McpServerFeatures.AsyncToolSpecification> toolSpecification = this.tools.stream()
 				.filter(tr -> callToolRequest.name().equals(tr.tool().name()))
@@ -590,7 +589,7 @@ public class McpAsyncServer {
 			var resourceList = this.resources.values()
 				.stream()
 				.map(McpServerFeatures.AsyncResourceSpecification::resource)
-				.toList();
+				.collect(Collectors.toList());
 			return Mono.just(new McpSchema.ListResourcesResult(resourceList, null));
 		};
 	}
@@ -608,11 +607,10 @@ public class McpAsyncServer {
 			.filter(uri -> uri.contains("{"))
 			.map(uri -> {
 				var resource = this.resources.get(uri).resource();
-				var template = new McpSchema.ResourceTemplate(resource.uri(), resource.name(), resource.title(),
-						resource.description(), resource.mimeType(), resource.annotations());
-				return template;
+                return new ResourceTemplate(resource.uri(), resource.name(), resource.title(),
+                        resource.description(), resource.mimeType(), resource.annotations());
 			})
-			.toList();
+				.collect(Collectors.toList());
 
 		list.addAll(resourceTemplates);
 
@@ -622,8 +620,8 @@ public class McpAsyncServer {
 	private McpRequestHandler<McpSchema.ReadResourceResult> resourcesReadRequestHandler() {
 		return (exchange, params) -> {
 			McpSchema.ReadResourceRequest resourceRequest = objectMapper.convertValue(params,
-					new TypeReference<McpSchema.ReadResourceRequest>() {
-					});
+                    new TypeReference<>() {
+                    });
 			var resourceUri = resourceRequest.uri();
 
 			McpServerFeatures.AsyncResourceSpecification specification = this.resources.values()
@@ -722,7 +720,7 @@ public class McpAsyncServer {
 			var promptList = this.prompts.values()
 				.stream()
 				.map(McpServerFeatures.AsyncPromptSpecification::prompt)
-				.toList();
+				.collect(Collectors.toList());
 
 			return Mono.just(new McpSchema.ListPromptsResult(promptList, null));
 		};
@@ -731,8 +729,8 @@ public class McpAsyncServer {
 	private McpRequestHandler<McpSchema.GetPromptResult> promptsGetRequestHandler() {
 		return (exchange, params) -> {
 			McpSchema.GetPromptRequest promptRequest = objectMapper.convertValue(params,
-					new TypeReference<McpSchema.GetPromptRequest>() {
-					});
+                    new TypeReference<>() {
+                    });
 
 			// Implement prompt retrieval logic here
 			McpServerFeatures.AsyncPromptSpecification specification = this.prompts.get(promptRequest.name());
@@ -775,22 +773,20 @@ public class McpAsyncServer {
 	}
 
 	private McpRequestHandler<Object> setLoggerRequestHandler() {
-		return (exchange, params) -> {
-			return Mono.defer(() -> {
+        return (exchange, params) -> Mono.defer(() -> {
 
-				SetLevelRequest newMinLoggingLevel = objectMapper.convertValue(params,
-						new TypeReference<SetLevelRequest>() {
-						});
+            SetLevelRequest newMinLoggingLevel = objectMapper.convertValue(params,
+                    new TypeReference<>() {
+                    });
 
-				exchange.setMinLoggingLevel(newMinLoggingLevel.level());
+            exchange.setMinLoggingLevel(newMinLoggingLevel.level());
 
-				// FIXME: this field is deprecated and should be removed together
-				// with the broadcasting loggingNotification.
-				this.minLoggingLevel = newMinLoggingLevel.level();
+            // FIXME: this field is deprecated and should be removed together
+            // with the broadcasting loggingNotification.
+            this.minLoggingLevel = newMinLoggingLevel.level();
 
-				return Mono.just(Map.of());
-			});
-		};
+            return Mono.just(Map.of());
+        });
 	}
 
 	private McpRequestHandler<McpSchema.CompleteResult> completionCompleteRequestHandler() {
@@ -815,12 +811,10 @@ public class McpAsyncServer {
 				if (promptSpec == null) {
 					return Mono.error(new McpError("Prompt not found: " + promptReference.name()));
 				}
-				if (!promptSpec.prompt()
+				if (promptSpec.prompt()
 					.arguments()
 					.stream()
-					.filter(arg -> arg.name().equals(argumentName))
-					.findFirst()
-					.isPresent()) {
+					.noneMatch(arg -> arg.name().equals(argumentName))) {
 
 					return Mono.error(new McpError("Argument not found: " + argumentName));
 				}

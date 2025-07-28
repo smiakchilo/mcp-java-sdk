@@ -48,16 +48,16 @@ public class StdioClientTransport implements McpClientTransport {
 	/** The server process being communicated with */
 	private Process process;
 
-	private ObjectMapper objectMapper;
+	private final ObjectMapper objectMapper;
 
 	/** Scheduler for handling inbound messages from the server process */
-	private Scheduler inboundScheduler;
+	private final Scheduler inboundScheduler;
 
 	/** Scheduler for handling outbound messages to the server process */
-	private Scheduler outboundScheduler;
+	private final Scheduler outboundScheduler;
 
 	/** Scheduler for handling error messages from the server process */
-	private Scheduler errorScheduler;
+	private final Scheduler errorScheduler;
 
 	/** Parameters for configuring and starting the server process */
 	private final ServerParameters params;
@@ -229,9 +229,7 @@ public class StdioClientTransport implements McpClientTransport {
 	}
 
 	private void handleIncomingErrors() {
-		this.errorSink.asFlux().subscribe(e -> {
-			this.stdErrorHandler.accept(e);
-		});
+		this.errorSink.asFlux().subscribe(e -> this.stdErrorHandler.accept(e));
 	}
 
 	@Override
@@ -346,7 +344,7 @@ public class StdioClientTransport implements McpClientTransport {
 		return Mono.fromRunnable(() -> {
 			isClosing = true;
 			logger.debug("Initiating graceful shutdown");
-		}).then(Mono.<Void>defer(() -> {
+		}).then(Mono.defer(() -> {
 			// First complete all sinks to stop accepting new messages
 			inboundSink.tryEmitComplete();
 			outboundSink.tryEmitComplete();
@@ -362,7 +360,7 @@ public class StdioClientTransport implements McpClientTransport {
 			}
 			else {
 				logger.warn("Process not started");
-				return Mono.<Process>empty();
+				return Mono.empty();
 			}
 		})).doOnNext(process -> {
 			if (process.exitValue() != 0) {

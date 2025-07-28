@@ -125,10 +125,10 @@ public class StdioServerTransportProvider implements McpServerTransportProvider 
 		private final AtomicBoolean isStarted = new AtomicBoolean(false);
 
 		/** Scheduler for handling inbound messages */
-		private Scheduler inboundScheduler;
+		private final Scheduler inboundScheduler;
 
 		/** Scheduler for handling outbound messages */
-		private Scheduler outboundScheduler;
+		private final Scheduler outboundScheduler;
 
 		private final Sinks.One<Void> outboundReady = Sinks.one();
 
@@ -199,7 +199,7 @@ public class StdioServerTransportProvider implements McpServerTransportProvider 
 			if (isStarted.compareAndSet(false, true)) {
 				this.inboundScheduler.schedule(() -> {
 					inboundReady.tryEmitValue(null);
-					BufferedReader reader = null;
+					BufferedReader reader;
 					try {
 						reader = new BufferedReader(new InputStreamReader(inputStream));
 						while (!isClosing.get()) {

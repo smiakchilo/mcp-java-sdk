@@ -14,6 +14,7 @@ import io.modelcontextprotocol.server.McpNotificationHandler;
 import io.modelcontextprotocol.server.McpRequestHandler;
 import io.modelcontextprotocol.server.McpTransportContext;
 import io.modelcontextprotocol.util.Assert;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -24,13 +25,17 @@ import reactor.core.publisher.Sinks;
  * Represents a Model Control Protocol (MCP) session on the server side. It manages
  * bidirectional JSON-RPC communication with the client.
  */
-public class McpServerSession implements McpLoggableSession {
+public class McpServerSession implements McpSession {
 
 	private static final Logger logger = LoggerFactory.getLogger(McpServerSession.class);
 
 	private final ConcurrentHashMap<Object, MonoSink<McpSchema.JSONRPCResponse>> pendingResponses = new ConcurrentHashMap<>();
 
-	private final String id;
+    /**
+     * Retrieve the session id.
+     */
+    @Getter
+    private final String id;
 
 	/** Duration to wait for request responses before timing out */
 	private final Duration requestTimeout;
@@ -110,18 +115,9 @@ public class McpServerSession implements McpLoggableSession {
 		this.notificationHandlers = notificationHandlers;
 	}
 
-	/**
-	 * Retrieve the session id.
-	 * @return session id
-	 */
-	public String getId() {
-		return this.id;
-	}
-
-	/**
+    /**
 	 * Called upon successful initialization sequence between the client and the server
 	 * with the client capabilities and information.
-	 *
 	 * <a href=
 	 * "https://github.com/modelcontextprotocol/specification/blob/main/docs/specification/basic/lifecycle.md#initialization">Initialization
 	 * Spec</a>
@@ -156,11 +152,12 @@ public class McpServerSession implements McpLoggableSession {
 			this.pendingResponses.put(requestId, sink);
 			McpSchema.JSONRPCRequest jsonrpcRequest = new McpSchema.JSONRPCRequest(McpSchema.JSONRPC_VERSION, method,
 					requestId, requestParams);
-			this.transport.sendMessage(jsonrpcRequest).subscribe(v -> {
-			}, error -> {
-				this.pendingResponses.remove(requestId);
-				sink.error(error);
-			});
+			this.transport.sendMessage(jsonrpcRequest).subscribe(
+					v -> {},
+					error -> {
+						this.pendingResponses.remove(requestId);
+						sink.error(error);
+					});
 		}).timeout(requestTimeout).handle((jsonRpcResponse, sink) -> {
 			if (jsonRpcResponse.error() != null) {
 				sink.error(new McpError(jsonRpcResponse.error()));
@@ -243,9 +240,9 @@ public class McpServerSession implements McpLoggableSession {
 			Mono<?> resultMono;
 			if (McpSchema.METHOD_INITIALIZE.equals(request.method())) {
 				// TODO handle situation where already initialized!
-				McpSchema.InitializeRequest initializeRequest = transport.unmarshalFrom(request.params(),
-						new TypeReference<McpSchema.InitializeRequest>() {
-						});
+				McpSchema.InitializeRequest initializeRequest = transport.unmarshalFrom(
+						request.params(),
+                        new TypeReference<>() {});
 
 				this.state.lazySet(STATE_INITIALIZING);
 				this.init(initializeRequest.capabilities(), initializeRequest.clientInfo());
@@ -318,7 +315,6 @@ public class McpServerSession implements McpLoggableSession {
 
 	/**
 	 * Request handler for the initialization request.
-	 *
 	 * @deprecated Use {@link McpInitRequestHandler}
 	 */
 	@Deprecated
@@ -399,7 +395,5 @@ public class McpServerSession implements McpLoggableSession {
 		 * @return a new server session.
 		 */
 		McpServerSession create(McpServerTransport sessionTransport);
-
 	}
-
 }

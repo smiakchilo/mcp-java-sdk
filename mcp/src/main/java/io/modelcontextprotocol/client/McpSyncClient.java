@@ -158,7 +158,6 @@ public class McpSyncClient implements AutoCloseable {
 	 * {@link McpSchema.ServerCapabilities}. <br/>
 	 * After successful initialization, the client MUST send an initialized notification
 	 * to indicate it is ready to begin normal operations.
-	 *
 	 * <br/>
 	 *
 	 * <a href=
@@ -195,7 +194,7 @@ public class McpSyncClient implements AutoCloseable {
 
 	/**
 	 * Send a synchronous ping request.
-	 * @return
+	 * @return The ping response
 	 */
 	public Object ping() {
 		return this.delegate.ping().block();
@@ -290,7 +289,6 @@ public class McpSyncClient implements AutoCloseable {
 	/**
 	 * Resource templates allow servers to expose parameterized resources using URI
 	 * templates. Arguments may be auto-completed through the completion API.
-	 *
 	 * Retrieves a paginated list of resource templates provided by the server.
 	 * @param cursor Optional pagination cursor from a previous list request
 	 * @return The list of resource templates result.
@@ -303,7 +301,6 @@ public class McpSyncClient implements AutoCloseable {
 	 * Subscriptions. The protocol supports optional subscriptions to resource changes.
 	 * Clients can subscribe to specific resources and receive notifications when they
 	 * change.
-	 *
 	 * Send a resources/subscribe request.
 	 * @param subscribeRequest the subscribe request contains the uri of the resource to
 	 * subscribe to.

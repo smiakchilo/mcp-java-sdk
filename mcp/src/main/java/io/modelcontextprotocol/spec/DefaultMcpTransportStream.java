@@ -18,7 +18,7 @@ import java.util.function.Function;
  * @param <CONNECTION> the resource serving the stream
  * @author Dariusz Jędrzejczyk
  */
-public class DefaultMcpTransportStream<CONNECTION> implements McpTransportStream<CONNECTION> {
+public class DefaultMcpTransportStream<CONNECTION> implements McpTransportStream {
 
 	private static final Logger logger = LoggerFactory.getLogger(DefaultMcpTransportStream.class);
 
@@ -31,7 +31,7 @@ public class DefaultMcpTransportStream<CONNECTION> implements McpTransportStream
 
 	private final boolean resumable;
 
-	private final Function<McpTransportStream<CONNECTION>, Publisher<CONNECTION>> reconnect;
+	private final Function<McpTransportStream, Publisher<CONNECTION>> reconnect;
 
 	/**
 	 * Constructs a new instance representing a particular stream that can resume using
@@ -42,7 +42,7 @@ public class DefaultMcpTransportStream<CONNECTION> implements McpTransportStream
 	 * using the stored {@link #lastId()}.
 	 */
 	public DefaultMcpTransportStream(boolean resumable,
-			Function<McpTransportStream<CONNECTION>, Publisher<CONNECTION>> reconnect) {
+			Function<McpTransportStream, Publisher<CONNECTION>> reconnect) {
 		this.reconnect = reconnect;
 		this.streamId = counter.getAndIncrement();
 		this.resumable = resumable;

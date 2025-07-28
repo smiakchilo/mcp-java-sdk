@@ -1091,7 +1091,6 @@ public final class McpSchema {
 
 	/**
 	 * Describes a message returned as part of a prompt.
-	 *
 	 * This is similar to `SamplingMessage`, but also supports the embedding of resources
 	 * from the MCP server.
 	 *
@@ -1209,11 +1208,9 @@ public final class McpSchema {
 
 	/**
 	 * Additional properties describing a Tool to clients.
-	 *
 	 * NOTE: all properties in ToolAnnotations are **hints**. They are not guaranteed to
 	 * provide a faithful description of tool behavior (including descriptive properties
 	 * like `title`).
-	 *
 	 * Clients should never make tool use decisions based on ToolAnnotations received from
 	 * untrusted servers.
 	 */
@@ -2596,7 +2593,6 @@ public final class McpSchema {
 
 	/**
 	 * The contents of a resource, embedded into a prompt or tool call result.
-	 *
 	 * It is up to the client how best to render embedded resources for the benefit of the
 	 * LLM and/or the user.
 	 *

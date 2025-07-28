@@ -195,7 +195,7 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 		});
 	}
 
-	private Mono<Disposable> reconnect(McpTransportStream<Disposable> stream) {
+	private Mono<Disposable> reconnect(McpTransportStream stream) {
 
 		return Mono.deferContextual(ctx -> {
 
@@ -252,7 +252,7 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 								Tuple2<Optional<String>, Iterable<McpSchema.JSONRPCMessage>> idWithMessages = Tuples
 									.of(Optional.ofNullable(responseEvent.sseEvent().id()), List.of(message));
 
-								McpTransportStream<Disposable> sessionStream = stream != null ? stream
+								McpTransportStream sessionStream = stream != null ? stream
 										: new DefaultMcpTransportStream<>(this.resumableStreams, this::reconnect);
 								logger.debug("Connected stream {}", sessionStream.streamId());
 
@@ -422,7 +422,7 @@ public class HttpClientStreamableHttpTransport implements McpClientTransport {
 									Tuple2<Optional<String>, Iterable<McpSchema.JSONRPCMessage>> idWithMessages = Tuples
 										.of(Optional.ofNullable(sseEvent.id()), List.of(message));
 
-									McpTransportStream<Disposable> sessionStream = new DefaultMcpTransportStream<>(
+									McpTransportStream sessionStream = new DefaultMcpTransportStream<>(
 											this.resumableStreams, this::reconnect);
 
 									logger.debug("Connected stream {}", sessionStream.streamId());

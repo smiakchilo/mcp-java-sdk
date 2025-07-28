@@ -238,8 +238,7 @@ class LifecycleInitializer {
 
 	public McpSchema.InitializeResult currentInitializationResult() {
 		DefaultInitialization current = this.initializationRef.get();
-		McpSchema.InitializeResult initializeResult = current != null ? current.result.get() : null;
-		return initializeResult;
+        return current != null ? current.result.get() : null;
 	}
 
 	/**
@@ -340,8 +339,7 @@ class LifecycleInitializer {
 	public Mono<?> closeGracefully() {
 		return Mono.defer(() -> {
 			DefaultInitialization current = this.initializationRef.getAndSet(null);
-			Mono<?> sessionClose = current != null ? current.closeGracefully() : Mono.empty();
-			return sessionClose;
+            return current != null ? current.closeGracefully() : Mono.empty();
 		});
 	}
 

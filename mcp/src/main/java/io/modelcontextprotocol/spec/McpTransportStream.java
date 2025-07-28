@@ -11,11 +11,9 @@ import java.util.Optional;
  * resume a broken connection from where it left off by optionally keeping track of
  * attached SSE event ids.
  *
- * @param <CONNECTION> the resource on which the stream is being served and consumed via
- * this mechanism
  * @author Dariusz Jędrzejczyk
  */
-public interface McpTransportStream<CONNECTION> {
+public interface McpTransportStream {
 
 	/**
 	 * The last observed event identifier.

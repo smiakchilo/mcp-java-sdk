@@ -20,7 +20,6 @@ import io.modelcontextprotocol.spec.McpServerTransport;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import io.modelcontextprotocol.util.Assert;
 import jakarta.servlet.AsyncContext;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -184,12 +183,11 @@ public class HttpServletSseServerTransportProvider extends HttpServlet implement
 	 * sends the initial endpoint information to the client.
 	 * @param request The HTTP servlet request
 	 * @param response The HTTP servlet response
-	 * @throws ServletException If a servlet-specific error occurs
 	 * @throws IOException If an I/O error occurs
 	 */
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+			throws IOException {
 
 		String requestURI = request.getRequestURI();
 		if (!requestURI.endsWith(sseEndpoint)) {
@@ -234,12 +232,11 @@ public class HttpServletSseServerTransportProvider extends HttpServlet implement
 	 * and formats error responses according to the MCP specification.
 	 * @param request The HTTP servlet request
 	 * @param response The HTTP servlet response
-	 * @throws ServletException If a servlet-specific error occurs
 	 * @throws IOException If an I/O error occurs
 	 */
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+			throws IOException {
 
 		if (isClosing.get()) {
 			response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Server is shutting down");
