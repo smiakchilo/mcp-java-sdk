@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -21,7 +21,6 @@ import io.modelcontextprotocol.spec.McpClientSession;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
-import io.modelcontextprotocol.spec.McpSchema.ClientCapabilities;
 import io.modelcontextprotocol.spec.McpSchema.CreateMessageRequest;
 import io.modelcontextprotocol.spec.McpSchema.CreateMessageResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitRequest;
@@ -78,9 +77,8 @@ import reactor.core.publisher.Mono;
  * @see McpClientSession
  * @see McpClientTransport
  */
+@Slf4j
 public class McpAsyncClient {
-
-	private static final Logger logger = LoggerFactory.getLogger(McpAsyncClient.class);
 
 	private static final TypeReference<Void> VOID_TYPE_REFERENCE = new TypeReference<>() {
 	};
@@ -104,14 +102,16 @@ public class McpAsyncClient {
 	};
 
 	/**
-	 * Client capabilities.
-	 */
-	private final McpSchema.ClientCapabilities clientCapabilities;
+     *  Get the client capabilities that define the supported features and functionality.
+     */
+	@Getter
+    private final McpSchema.ClientCapabilities clientCapabilities;
 
 	/**
-	 * Client implementation information.
-	 */
-	private final McpSchema.Implementation clientInfo;
+     *  Get the client implementation information.
+     */
+	@Getter
+    private final McpSchema.Implementation clientInfo;
 
 	/**
 	 * Roots define the boundaries of where servers can operate within the filesystem,
@@ -205,7 +205,7 @@ public class McpAsyncClient {
 		// Tools Change Notification
 		List<Function<List<McpSchema.Tool>, Mono<Void>>> toolsChangeConsumersFinal = new ArrayList<>();
 		toolsChangeConsumersFinal
-			.add((notification) -> Mono.fromRunnable(() -> logger.debug("Tools changed: {}", notification)));
+			.add((notification) -> Mono.fromRunnable(() -> log.debug("Tools changed: {}", notification)));
 
 		if (!Utils.isEmpty(features.toolsChangeConsumers())) {
 			toolsChangeConsumersFinal.addAll(features.toolsChangeConsumers());
@@ -216,7 +216,7 @@ public class McpAsyncClient {
 		// Resources Change Notification
 		List<Function<List<McpSchema.Resource>, Mono<Void>>> resourcesChangeConsumersFinal = new ArrayList<>();
 		resourcesChangeConsumersFinal
-			.add((notification) -> Mono.fromRunnable(() -> logger.debug("Resources changed: {}", notification)));
+			.add((notification) -> Mono.fromRunnable(() -> log.debug("Resources changed: {}", notification)));
 
 		if (!Utils.isEmpty(features.resourcesChangeConsumers())) {
 			resourcesChangeConsumersFinal.addAll(features.resourcesChangeConsumers());
@@ -228,7 +228,7 @@ public class McpAsyncClient {
 		// Resources Update Notification
 		List<Function<List<McpSchema.ResourceContents>, Mono<Void>>> resourcesUpdateConsumersFinal = new ArrayList<>();
 		resourcesUpdateConsumersFinal
-			.add((notification) -> Mono.fromRunnable(() -> logger.debug("Resources updated: {}", notification)));
+			.add((notification) -> Mono.fromRunnable(() -> log.debug("Resources updated: {}", notification)));
 
 		if (!Utils.isEmpty(features.resourcesUpdateConsumers())) {
 			resourcesUpdateConsumersFinal.addAll(features.resourcesUpdateConsumers());
@@ -240,7 +240,7 @@ public class McpAsyncClient {
 		// Prompts Change Notification
 		List<Function<List<McpSchema.Prompt>, Mono<Void>>> promptsChangeConsumersFinal = new ArrayList<>();
 		promptsChangeConsumersFinal
-			.add((notification) -> Mono.fromRunnable(() -> logger.debug("Prompts changed: {}", notification)));
+			.add((notification) -> Mono.fromRunnable(() -> log.debug("Prompts changed: {}", notification)));
 		if (!Utils.isEmpty(features.promptsChangeConsumers())) {
 			promptsChangeConsumersFinal.addAll(features.promptsChangeConsumers());
 		}
@@ -249,7 +249,7 @@ public class McpAsyncClient {
 
 		// Utility Logging Notification
 		List<Function<LoggingMessageNotification, Mono<Void>>> loggingConsumersFinal = new ArrayList<>();
-		loggingConsumersFinal.add((notification) -> Mono.fromRunnable(() -> logger.debug("Logging: {}", notification)));
+		loggingConsumersFinal.add((notification) -> Mono.fromRunnable(() -> log.debug("Logging: {}", notification)));
 		if (!Utils.isEmpty(features.loggingConsumers())) {
 			loggingConsumersFinal.addAll(features.loggingConsumers());
 		}
@@ -259,7 +259,7 @@ public class McpAsyncClient {
 		// Utility Progress Notification
 		List<Function<McpSchema.ProgressNotification, Mono<Void>>> progressConsumersFinal = new ArrayList<>();
 		progressConsumersFinal
-			.add((notification) -> Mono.fromRunnable(() -> logger.debug("Progress: {}", notification)));
+			.add((notification) -> Mono.fromRunnable(() -> log.debug("Progress: {}", notification)));
 		if (!Utils.isEmpty(features.progressConsumers())) {
 			progressConsumersFinal.addAll(features.progressConsumers());
 		}
@@ -309,23 +309,7 @@ public class McpAsyncClient {
 		return this.initializer.isInitialized();
 	}
 
-	/**
-	 * Get the client capabilities that define the supported features and functionality.
-	 * @return The client capabilities
-	 */
-	public ClientCapabilities getClientCapabilities() {
-		return this.clientCapabilities;
-	}
-
-	/**
-	 * Get the client implementation information.
-	 * @return The client implementation details
-	 */
-	public McpSchema.Implementation getClientInfo() {
-		return this.clientInfo;
-	}
-
-	/**
+    /**
 	 * Closes the client connection immediately.
 	 */
 	public void close() {
@@ -411,14 +395,14 @@ public class McpAsyncClient {
 
 		this.roots.put(root.uri(), root);
 
-		logger.debug("Added root: {}", root);
+		log.debug("Added root: {}", root);
 
 		if (this.clientCapabilities.roots().listChanged()) {
 			if (this.isInitialized()) {
 				return this.rootsListChangedNotification();
 			}
 			else {
-				logger.warn("Client is not initialized, ignore sending a roots list changed notification");
+				log.warn("Client is not initialized, ignore sending a roots list changed notification");
 			}
 		}
 		return Mono.empty();
@@ -442,13 +426,13 @@ public class McpAsyncClient {
 		Root removed = this.roots.remove(rootUri);
 
 		if (removed != null) {
-			logger.debug("Removed Root: {}", rootUri);
+			log.debug("Removed Root: {}", rootUri);
 			if (this.clientCapabilities.roots().listChanged()) {
 				if (this.isInitialized()) {
 					return this.rootsListChangedNotification();
 				}
 				else {
-					logger.warn("Client is not initialized, ignore sending a roots list changed notification");
+					log.warn("Client is not initialized, ignore sending a roots list changed notification");
 				}
 
 			}
@@ -568,7 +552,7 @@ public class McpAsyncClient {
 			.flatMap(listToolsResult -> Flux.fromIterable(toolsChangeConsumers)
 				.flatMap(consumer -> consumer.apply(listToolsResult.tools()))
 				.onErrorResume(error -> {
-					logger.error("Error handling tools list change notification", error);
+					log.error("Error handling tools list change notification", error);
 					return Mono.empty();
 				})
 				.then());
@@ -728,7 +712,7 @@ public class McpAsyncClient {
 		return params -> listResources().flatMap(listResourcesResult -> Flux.fromIterable(resourcesChangeConsumers)
 			.flatMap(consumer -> consumer.apply(listResourcesResult.resources()))
 			.onErrorResume(error -> {
-				logger.error("Error handling resources list change notification", error);
+				log.error("Error handling resources list change notification", error);
 				return Mono.empty();
 			})
 			.then());
@@ -745,7 +729,7 @@ public class McpAsyncClient {
 				.flatMap(readResourceResult -> Flux.fromIterable(resourcesUpdateConsumers)
 					.flatMap(consumer -> consumer.apply(readResourceResult.contents()))
 					.onErrorResume(error -> {
-						logger.error("Error handling resource update notification", error);
+						log.error("Error handling resource update notification", error);
 						return Mono.empty();
 					})
 					.then());
@@ -808,7 +792,7 @@ public class McpAsyncClient {
 		return params -> listPrompts().flatMap(listPromptsResult -> Flux.fromIterable(promptsChangeConsumers)
 			.flatMap(consumer -> consumer.apply(listPromptsResult.prompts()))
 			.onErrorResume(error -> {
-				logger.error("Error handling prompts list change notification", error);
+				log.error("Error handling prompts list change notification", error);
 				return Mono.empty();
 			})
 			.then());
