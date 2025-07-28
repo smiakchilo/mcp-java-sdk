@@ -12,14 +12,13 @@
 	<url>https://github.com/modelcontextprotocol/java-sdk</url>
 
 	<scm>
-		<url>https://github.com/modelcontextprotocol/java-sdk</url>
-		<connection>git://github.com/modelcontextprotocol/java-sdk.git</connection>
-		<developerConnection>git@github.com/modelcontextprotocol/java-sdk.git</developerConnection>
+		<url>https://github.com/smiakchilo/mcp-java-sdk</url>
+		<connection>git://github.com/smiakchilo/mcp-java-sdk.git</connection>
+		<developerConnection>git@github.com/smiakchilo/mcp-java-sdk.git</developerConnection>
 	</scm>
 
 	<name>Java SDK MCP Parent</name>
 	<description>Java SDK for the Model Context Protocol (MCP), enabling interaction with AI models and tools through a standardized interface</description>
-
 
 	<organization>
 		<name>Anthropic</name>

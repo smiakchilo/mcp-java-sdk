@@ -14,12 +14,6 @@
 	<description>Java SDK implementation of the Model Context Protocol, enabling seamless integration with language models and AI tools</description>
 	<url>https://github.com/modelcontextprotocol/java-sdk</url>
 
-	<scm>
-		<url>https://github.com/smiakchilo/mcp-java-sdk</url>
-		<connection>git://github.com/smiakchilo/mcp-java-sdk.git</connection>
-		<developerConnection>git@github.com/smiakchilo/mcp-java-sdk.git</developerConnection>
-	</scm>
-
 	<build>
 		<plugins>
 			<plugin>
