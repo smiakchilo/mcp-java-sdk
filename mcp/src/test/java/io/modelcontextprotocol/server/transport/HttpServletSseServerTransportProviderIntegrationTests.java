@@ -4,7 +4,6 @@
 package io.modelcontextprotocol.server.transport;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -54,6 +53,7 @@ import static org.mockito.Mockito.mock;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 
+@SuppressWarnings("deprecation")
 class HttpServletSseServerTransportProviderIntegrationTests {
 
 	private static final int PORT = TomcatTestUtil.findAvailablePort();
@@ -208,7 +208,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	}
 
 	@Test
-	void testCreateMessageWithRequestTimeoutSuccess() throws InterruptedException {
+	void testCreateMessageWithRequestTimeoutSuccess() {
 
 		// Client
 
@@ -282,7 +282,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	}
 
 	@Test
-	void testCreateMessageWithRequestTimeoutFail() throws InterruptedException {
+	void testCreateMessageWithRequestTimeoutFail() {
 
 		// Client
 
@@ -346,9 +346,9 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 		InitializeResult initResult = mcpClient.initialize();
 		assertThat(initResult).isNotNull();
 
-		assertThatExceptionOfType(McpError.class).isThrownBy(() -> {
-			mcpClient.callTool(new McpSchema.CallToolRequest("tool1", Map.of()));
-		}).withMessageContaining("Timeout");
+		assertThatExceptionOfType(McpError.class)
+				.isThrownBy(() -> mcpClient.callTool(new McpSchema.CallToolRequest("tool1", Map.of())))
+				.withMessageContaining("Timeout");
 
 		mcpClient.close();
 		mcpServer.close();
@@ -364,9 +364,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
 			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
 			.callHandler((exchange, request) -> {
-
 				exchange.createElicitation(mock(ElicitRequest.class)).block();
-
 				return Mono.just(mock(CallToolResult.class));
 			})
 			.build();
@@ -565,9 +563,9 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 		InitializeResult initResult = mcpClient.initialize();
 		assertThat(initResult).isNotNull();
 
-		assertThatExceptionOfType(McpError.class).isThrownBy(() -> {
-			mcpClient.callTool(new McpSchema.CallToolRequest("tool1", Map.of()));
-		}).withMessageContaining("Timeout");
+		assertThatExceptionOfType(McpError.class)
+				.isThrownBy(() -> mcpClient.callTool(new McpSchema.CallToolRequest("tool1", Map.of())))
+				.withMessageContaining("Timeout");
 
 		mcpClient.closeGracefully();
 		mcpServer.closeGracefully().block();
@@ -597,24 +595,22 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 			mcpClient.rootsListChangedNotification();
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(rootsRef.get()).containsAll(roots);
-			});
+			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(rootsRef.get()).containsAll(roots));
 
 			// Remove a root
 			mcpClient.removeRoot(roots.get(0).uri());
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(rootsRef.get()).containsAll(List.of(roots.get(1)));
-			});
+			await()
+					.atMost(Duration.ofSeconds(5))
+					.untilAsserted(() -> assertThat(rootsRef.get()).containsAll(List.of(roots.get(1))));
 
 			// Add a new root
 			var root3 = new Root("uri3://", "root3");
 			mcpClient.addRoot(root3);
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(rootsRef.get()).containsAll(List.of(roots.get(1), root3));
-			});
+			await()
+					.atMost(Duration.ofSeconds(5))
+					.untilAsserted(() -> assertThat(rootsRef.get()).containsAll(List.of(roots.get(1), root3)));
 
 			mcpServer.close();
 		}
@@ -669,9 +665,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 			mcpClient.rootsListChangedNotification();
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(rootsRef.get()).isEmpty();
-			});
+			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(rootsRef.get()).isEmpty());
 		}
 
 		mcpServer.close();
@@ -725,9 +719,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 			mcpClient.rootsListChangedNotification();
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(rootsRef.get()).containsAll(roots);
-			});
+			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(rootsRef.get()).containsAll(roots));
 		}
 
 		mcpServer.close();
@@ -789,11 +781,14 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	@Test
 	void testToolCallImmediateExecution() {
 		McpServerFeatures.SyncToolSpecification tool1 = new McpServerFeatures.SyncToolSpecification(
-				new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema), (exchange, request) -> {
+				new McpSchema.Tool(
+						"tool1",
+						"tool1 description", emptyJsonSchema),
+				(exchange, request) -> {
 					var threadLocalValue = McpTestServletFilter.getThreadLocalValue();
 					return CallToolResult.builder()
-						.addTextContent(threadLocalValue != null ? threadLocalValue : "<unset>")
-						.build();
+							.addTextContent(threadLocalValue != null ? threadLocalValue : "<unset>")
+							.build();
 				});
 
 		var mcpServer = McpServer.sync(mcpServerTransportProvider)
@@ -862,16 +857,14 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 			mcpServer.notifyToolsListChanged();
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(rootsRef.get()).containsAll(List.of(tool1.tool()));
-			});
+			await()
+					.atMost(Duration.ofSeconds(5))
+					.untilAsserted(() -> assertThat(rootsRef.get()).containsAll(List.of(tool1.tool())));
 
 			// Remove a tool
 			mcpServer.removeTool("tool1");
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(rootsRef.get()).isEmpty();
-			});
+			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(rootsRef.get()).isEmpty());
 
 			// Add a new tool
 			McpServerFeatures.SyncToolSpecification tool2 = McpServerFeatures.SyncToolSpecification.builder()
@@ -881,9 +874,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 			mcpServer.addTool(tool2);
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(rootsRef.get()).containsAll(List.of(tool2.tool()));
-			});
+			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(rootsRef.get()).containsAll(List.of(tool2.tool())));
 		}
 
 		mcpServer.close();
@@ -973,10 +964,8 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 			.build();
 		try (
 				// Create client with logging notification handler
-				var mcpClient = clientBuilder.loggingConsumer(notification -> {
-					receivedNotifications.add(notification);
-				}).build()) {
-
+				var mcpClient = clientBuilder.loggingConsumer(receivedNotifications::add).build()
+		) {
 			// Initialize client
 			InitializeResult initResult = mcpClient.initialize();
 			assertThat(initResult).isNotNull();
@@ -999,7 +988,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				assertThat(receivedNotifications).hasSize(3);
 
 				Map<String, McpSchema.LoggingMessageNotification> notificationMap = receivedNotifications.stream()
-					.collect(Collectors.toMap(n -> n.data(), n -> n));
+					.collect(Collectors.toMap(McpSchema.LoggingMessageNotification::data, n -> n));
 
 				// First notification should be NOTICE level
 				assertThat(notificationMap.get("Notice message").level()).isEqualTo(McpSchema.LoggingLevel.NOTICE);
@@ -1233,7 +1222,8 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 			.outputSchema(outputSchema)
 			.build();
 
-		McpServerFeatures.SyncToolSpecification tool = new McpServerFeatures.SyncToolSpecification(calculatorTool,
+		McpServerFeatures.SyncToolSpecification tool = new McpServerFeatures.SyncToolSpecification(
+				calculatorTool,
 				(exchange, request) -> {
 					// Return invalid structured output. Result should be number, missing
 					// operation
@@ -1281,7 +1271,8 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 			.outputSchema(outputSchema)
 			.build();
 
-		McpServerFeatures.SyncToolSpecification tool = new McpServerFeatures.SyncToolSpecification(calculatorTool,
+		McpServerFeatures.SyncToolSpecification tool = new McpServerFeatures.SyncToolSpecification(
+				calculatorTool,
 				(exchange, request) -> {
 					// Return result without structured content but tool has output schema
 					return CallToolResult.builder().addTextContent("Calculation completed").build();
@@ -1340,7 +1331,8 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				.outputSchema(outputSchema)
 				.build();
 
-			McpServerFeatures.SyncToolSpecification toolSpec = new McpServerFeatures.SyncToolSpecification(dynamicTool,
+			McpServerFeatures.SyncToolSpecification toolSpec = new McpServerFeatures.SyncToolSpecification(
+					dynamicTool,
 					(exchange, request) -> {
 						int count = (Integer) request.getOrDefault("count", 1);
 						return CallToolResult.builder()
@@ -1353,9 +1345,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 			mcpServer.addTool(toolSpec);
 
 			// Wait for tool list change notification
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-				assertThat(mcpClient.listTools().tools()).hasSize(1);
-			});
+			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(mcpClient.listTools().tools()).hasSize(1));
 
 			// Verify tool was added with output schema
 			var toolsList = mcpClient.listTools();

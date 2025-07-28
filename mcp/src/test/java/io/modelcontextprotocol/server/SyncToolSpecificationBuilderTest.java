@@ -22,6 +22,7 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
  *
  * @author Christian Tzolov
  */
+@SuppressWarnings("deprecation")
 class SyncToolSpecificationBuilderTest {
 
 	String emptyJsonSchema = """

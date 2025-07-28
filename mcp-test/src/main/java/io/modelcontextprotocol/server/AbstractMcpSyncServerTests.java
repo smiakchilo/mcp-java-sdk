@@ -68,9 +68,10 @@ public abstract class AbstractMcpSyncServerTests {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("Transport provider must not be null");
 
-		assertThatThrownBy(() -> prepareSyncServerBuilder().serverInfo(null))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Server info must not be null");
+		assertThatThrownBy(() -> prepareSyncServerBuilder()
+                .serverInfo(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Server info must not be null");
 	}
 
 	@Test
@@ -111,9 +112,10 @@ public abstract class AbstractMcpSyncServerTests {
 	@Test
 	@Deprecated
 	void testAddTool() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
 		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
 		assertThatCode(() -> mcpSyncServer.addTool(new McpServerFeatures.SyncToolSpecification(newTool,
@@ -125,9 +127,10 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testAddToolCall() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
 		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
 		assertThatCode(() -> mcpSyncServer.addTool(McpServerFeatures.SyncToolSpecification.builder()
@@ -143,10 +146,11 @@ public abstract class AbstractMcpSyncServerTests {
 	void testAddDuplicateTool() {
 		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
 
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tool(duplicateTool, (exchange, args) -> new CallToolResult(List.of(), false))
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tool(duplicateTool, (exchange, args) -> new CallToolResult(List.of(), false))
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.addTool(new McpServerFeatures.SyncToolSpecification(duplicateTool,
 				(exchange, args) -> new CallToolResult(List.of(), false))))
@@ -160,10 +164,11 @@ public abstract class AbstractMcpSyncServerTests {
 	void testAddDuplicateToolCall() {
 		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
 
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(duplicateTool, (exchange, request) -> new CallToolResult(List.of(), false))
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(duplicateTool, (exchange, request) -> new CallToolResult(List.of(), false))
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.addTool(McpServerFeatures.SyncToolSpecification.builder()
 			.tool(duplicateTool)
@@ -201,40 +206,43 @@ public abstract class AbstractMcpSyncServerTests {
 					.build() // Duplicate!
 		);
 
-		assertThatThrownBy(() -> prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tools(specs)
-			.build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Tool with name 'batch-list-tool' is already registered.");
+		assertThatThrownBy(() -> prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tools(specs)
+                .build()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tool with name 'batch-list-tool' is already registered.");
 	}
 
 	@Test
 	void testDuplicateToolsInBatchVarargsRegistration() {
 		Tool duplicateTool = new Tool("batch-varargs-tool", "Duplicate tool in batch varargs", emptyJsonSchema);
 
-		assertThatThrownBy(() -> prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tools(McpServerFeatures.SyncToolSpecification.builder()
-				.tool(duplicateTool)
-				.callHandler((exchange, request) -> new CallToolResult(List.of(), false))
-				.build(),
-					McpServerFeatures.SyncToolSpecification.builder()
-						.tool(duplicateTool)
-						.callHandler((exchange, request) -> new CallToolResult(List.of(), false))
-						.build() // Duplicate!
-			)
-			.build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Tool with name 'batch-varargs-tool' is already registered.");
+		assertThatThrownBy(() -> prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tools(McpServerFeatures.SyncToolSpecification.builder()
+                    .tool(duplicateTool)
+                    .callHandler((exchange, request) -> new CallToolResult(List.of(), false))
+                    .build(),
+                        McpServerFeatures.SyncToolSpecification.builder()
+                            .tool(duplicateTool)
+                            .callHandler((exchange, request) -> new CallToolResult(List.of(), false))
+                            .build() // Duplicate!
+                )
+                .build()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tool with name 'batch-varargs-tool' is already registered.");
 	}
 
 	@Test
 	void testRemoveTool() {
 		Tool tool = new McpSchema.Tool(TEST_TOOL_NAME, "Test tool", emptyJsonSchema);
 
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(tool, (exchange, args) -> new CallToolResult(List.of(), false))
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(tool, (exchange, args) -> new CallToolResult(List.of(), false))
+                .build();
 
 		assertThatCode(() -> mcpSyncServer.removeTool(TEST_TOOL_NAME)).doesNotThrowAnyException();
 
@@ -243,9 +251,10 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testRemoveNonexistentTool() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.removeTool("nonexistent-tool")).isInstanceOf(McpError.class)
 			.hasMessage("Tool with name 'nonexistent-tool' not found");
@@ -288,9 +297,10 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testAddResource() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().resources(true, false).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().resources(true, false).build())
+                .build();
 
 		Resource resource = new Resource(TEST_RESOURCE_URI, "Test Resource", "text/plain", "Test resource description",
 				null);
@@ -304,9 +314,10 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testAddResourceWithNullSpecification() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().resources(true, false).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().resources(true, false).build())
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.addResource((McpServerFeatures.SyncResourceSpecification) null))
 			.isInstanceOf(McpError.class)
