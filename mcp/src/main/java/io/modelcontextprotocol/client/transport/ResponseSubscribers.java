@@ -9,6 +9,12 @@ import java.net.http.HttpResponse.ResponseInfo;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Subscription;
 
@@ -28,25 +34,47 @@ import reactor.core.publisher.FluxSink;
  * @author Christian Tzolov
  * @author Dariusz Jędrzejczyk
  */
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 class ResponseSubscribers {
 
-	record SseEvent(String id, String event, String data) {
+	@RequiredArgsConstructor
+	@Accessors(fluent = true)
+	@Getter
+	@EqualsAndHashCode
+	static class SseEvent {
+		private final String id;
+		private final String event;
+		private final String data;
 	}
 
-	sealed interface ResponseEvent permits SseResponseEvent, AggregateResponseEvent, DummyEvent {
-
+	interface ResponseEvent {
 		ResponseInfo responseInfo();
-
 	}
 
-	record DummyEvent(ResponseInfo responseInfo) implements ResponseEvent {
-
+	@RequiredArgsConstructor
+	@Accessors(fluent = true)
+	@Getter
+	@EqualsAndHashCode
+	static class DummyEvent implements ResponseEvent {
+		private final ResponseInfo responseInfo;
 	}
 
-	record SseResponseEvent(ResponseInfo responseInfo, SseEvent sseEvent) implements ResponseEvent {
+	@RequiredArgsConstructor
+	@Accessors(fluent = true)
+	@Getter
+	@EqualsAndHashCode
+	static class SseResponseEvent implements ResponseEvent {
+		private final ResponseInfo responseInfo;
+		private final SseEvent sseEvent;
 	}
 
-	record AggregateResponseEvent(ResponseInfo responseInfo, String data) implements ResponseEvent {
+	@RequiredArgsConstructor
+	@Accessors(fluent = true)
+	@Getter
+	@EqualsAndHashCode
+	static class AggregateResponseEvent implements ResponseEvent {
+		private final ResponseInfo responseInfo;
+		private final String data;
 	}
 
 	static BodySubscriber<Void> sseToBodySubscriber(ResponseInfo responseInfo, FluxSink<ResponseEvent> sink) {
@@ -105,7 +133,7 @@ class ResponseSubscribers {
 		 * The response information from the HTTP response. Send with each event to
 		 * provide context.
 		 */
-		private ResponseInfo responseInfo;
+		private final ResponseInfo responseInfo;
 
 		/**
 		 * Creates a new LineSubscriber that will emit parsed SSE events to the provided
@@ -122,16 +150,12 @@ class ResponseSubscribers {
 		}
 
 		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
+		protected void hookOnSubscribe(@NonNull Subscription subscription) {
 
-			sink.onRequest(n -> {
-				subscription.request(n);
-			});
+			sink.onRequest(subscription::request);
 
 			// Register disposal callback to cancel subscription when Flux is disposed
-			sink.onDispose(() -> {
-				subscription.cancel();
-			});
+			sink.onDispose(subscription::cancel);
 		}
 
 		@Override
@@ -187,7 +211,7 @@ class ResponseSubscribers {
 		}
 
 		@Override
-		protected void hookOnError(Throwable throwable) {
+		protected void hookOnError(@NonNull Throwable throwable) {
 			this.sink.error(throwable);
 		}
 
@@ -209,7 +233,7 @@ class ResponseSubscribers {
 		 * The response information from the HTTP response. Send with each event to
 		 * provide context.
 		 */
-		private ResponseInfo responseInfo;
+		private final ResponseInfo responseInfo;
 
 		/**
 		 * Creates a new JsonLineSubscriber that will emit parsed JSON-RPC messages.
@@ -231,13 +255,13 @@ class ResponseSubscribers {
 		}
 
 		@Override
-		protected void hookOnNext(String line) {
+		protected void hookOnNext(@NonNull String line) {
 			this.eventBuilder.append(line).append("\n");
 		}
 
 		@Override
 		protected void hookOnComplete() {
-			if (this.eventBuilder.length() > 0) {
+			if (!this.eventBuilder.isEmpty()) {
 				String data = this.eventBuilder.toString();
 				this.sink.next(new AggregateResponseEvent(responseInfo, data));
 			}
@@ -245,7 +269,7 @@ class ResponseSubscribers {
 		}
 
 		@Override
-		protected void hookOnError(Throwable throwable) {
+		protected void hookOnError(@NonNull Throwable throwable) {
 			this.sink.error(throwable);
 		}
 
@@ -266,16 +290,12 @@ class ResponseSubscribers {
 		}
 
 		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
+		protected void hookOnSubscribe(@NonNull Subscription subscription) {
 
-			sink.onRequest(n -> {
-				subscription.request(n);
-			});
+			sink.onRequest(subscription::request);
 
 			// Register disposal callback to cancel subscription when Flux is disposed
-			sink.onDispose(() -> {
-				subscription.cancel();
-			});
+			sink.onDispose(subscription::cancel);
 		}
 
 		@Override
@@ -289,7 +309,7 @@ class ResponseSubscribers {
 		}
 
 		@Override
-		protected void hookOnError(Throwable throwable) {
+		protected void hookOnError(@NonNull Throwable throwable) {
 			this.sink.error(throwable);
 		}
 

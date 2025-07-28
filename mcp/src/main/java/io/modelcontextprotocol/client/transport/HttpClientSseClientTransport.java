@@ -198,7 +198,8 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 	/**
 	 * Builder for {@link HttpClientSseClientTransport}.
 	 */
-	public static class Builder {
+	@SuppressWarnings("unused")
+    public static class Builder {
 
 		private String baseUri;
 
@@ -333,68 +334,73 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 				.GET()
 				.build();
 
-			Disposable connection = Flux.<ResponseEvent>create(sseSink -> this.httpClient
-				.sendAsync(request, responseInfo -> ResponseSubscribers.sseToBodySubscriber(responseInfo, sseSink))
-				.exceptionallyCompose(e -> {
-					sseSink.error(e);
-					return CompletableFuture.failedFuture(e);
-				}))
-				.map(responseEvent -> (ResponseSubscribers.SseResponseEvent) responseEvent)
-				.flatMap(responseEvent -> {
-					if (isClosing) {
-						return Mono.empty();
-					}
+			Disposable connection = Flux
+					.<ResponseEvent>create(sseSink ->
+							this.httpClient
+									.sendAsync(request,
+											responseInfo -> ResponseSubscribers.sseToBodySubscriber(responseInfo,
+													sseSink))
+									.handle((result, throwable) -> {
+										if (throwable != null) {
+											sseSink.error(throwable);
+											return CompletableFuture.<HttpResponse<Void>>failedFuture(throwable);
+										}
+										return result;
+									}))
+					.map(responseEvent -> (ResponseSubscribers.SseResponseEvent) responseEvent)
+					.flatMap(responseEvent -> {
+						if (isClosing) {
+							return Mono.empty();
+						}
 
-					int statusCode = responseEvent.responseInfo().statusCode();
+						int statusCode = responseEvent.responseInfo().statusCode();
 
-					if (statusCode >= 200 && statusCode < 300) {
-						try {
-							if (ENDPOINT_EVENT_TYPE.equals(responseEvent.sseEvent().event())) {
-								String messageEndpointUri = responseEvent.sseEvent().data();
-								if (this.messageEndpointSink.tryEmitValue(messageEndpointUri).isSuccess()) {
+						if (statusCode >= 200 && statusCode < 300) {
+							try {
+								if (ENDPOINT_EVENT_TYPE.equals(responseEvent.sseEvent().event())) {
+									String messageEndpointUri = responseEvent.sseEvent().data();
+									if (this.messageEndpointSink.tryEmitValue(messageEndpointUri).isSuccess()) {
+										sink.success();
+										return Flux.empty(); // No further processing needed
+									} else {
+										sink.error(new McpError("Failed to handle SSE endpoint event"));
+									}
+								} else if (MESSAGE_EVENT_TYPE.equals(responseEvent.sseEvent().event())) {
+									JSONRPCMessage message = McpSchema.deserializeJsonRpcMessage(
+											objectMapper,
+											responseEvent.sseEvent().data());
 									sink.success();
-									return Flux.empty(); // No further processing needed
+									return Flux.just(message);
+								} else {
+									logger.debug("Received unrecognized SSE event type: {}",
+											responseEvent.sseEvent());
+									sink.success();
 								}
-								else {
-									sink.error(new McpError("Failed to handle SSE endpoint event"));
-								}
-							}
-							else if (MESSAGE_EVENT_TYPE.equals(responseEvent.sseEvent().event())) {
-								JSONRPCMessage message = McpSchema.deserializeJsonRpcMessage(objectMapper,
-										responseEvent.sseEvent().data());
-								sink.success();
-								return Flux.just(message);
-							}
-							else {
-								logger.debug("Received unrecognized SSE event type: {}", responseEvent.sseEvent());
-								sink.success();
+							} catch (IOException e) {
+								logger.error("Error processing SSE event", e);
+								sink.error(new McpError("Error processing SSE event"));
 							}
 						}
-						catch (IOException e) {
-							logger.error("Error processing SSE event", e);
-							sink.error(new McpError("Error processing SSE event"));
-						}
-					}
-					return Flux.<McpSchema.JSONRPCMessage>error(
-							new RuntimeException("Failed to send message: " + responseEvent));
+						return Flux.error(
+								new RuntimeException("Failed to send message: " + responseEvent));
 
-				})
-				.flatMap(jsonRpcMessage -> handler.apply(Mono.just(jsonRpcMessage)))
-				.onErrorComplete(t -> {
-					if (!isClosing) {
-						logger.warn("SSE stream observed an error", t);
-						sink.error(t);
-					}
-					return true;
-				})
-				.doFinally(s -> {
-					Disposable ref = this.sseSubscription.getAndSet(null);
-					if (ref != null && !ref.isDisposed()) {
-						ref.dispose();
-					}
-				})
-				.contextWrite(sink.contextView())
-				.subscribe();
+					})
+					.flatMap(jsonRpcMessage -> handler.apply(Mono.just(jsonRpcMessage)))
+					.onErrorComplete(t -> {
+						if (!isClosing) {
+							logger.warn("SSE stream observed an error", t);
+							sink.error(t);
+						}
+						return true;
+					})
+					.doFinally(s -> {
+						Disposable ref = this.sseSubscription.getAndSet(null);
+						if (ref != null && !ref.isDisposed()) {
+							ref.dispose();
+						}
+					})
+					.contextWrite(sink.contextView())
+					.subscribe();
 
 			this.sseSubscription.set(connection);
 		});
@@ -419,22 +425,28 @@ public class HttpClientSseClientTransport implements McpClientTransport {
 			}
 
 			return this.serializeMessage(message)
-				.flatMap(body -> sendHttpPost(messageEndpointUri, body).handle((response, sink) -> {
-					if (response.statusCode() != 200 && response.statusCode() != 201 && response.statusCode() != 202
-							&& response.statusCode() != 206) {
-						sink.error(new RuntimeException("Sending message failed with a non-OK HTTP code: "
-								+ response.statusCode() + " - " + response.body()));
-					}
-					else {
-						sink.next(response);
-						sink.complete();
-					}
-				}))
-				.doOnError(error -> {
-					if (!isClosing) {
-						logger.error("Error sending message: {}", error.getMessage());
-					}
-				});
+					.flatMap(body ->
+							sendHttpPost(messageEndpointUri, body)
+									.handle((response, sink) -> {
+										if (
+												response.statusCode() != 200
+												&& response.statusCode() != 201
+												&& response.statusCode() != 202
+												&& response.statusCode() != 206
+										) {
+											sink.error(new RuntimeException("Sending message failed with a non-OK HTTP" +
+													" code: "
+													+ response.statusCode() + " - " + response.body()));
+										} else {
+											sink.next(response);
+											sink.complete();
+										}
+									}))
+					.doOnError(error -> {
+						if (!isClosing) {
+							logger.error("Error sending message: {}", error.getMessage());
+						}
+					});
 		}).then();
 
 	}
