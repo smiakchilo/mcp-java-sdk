@@ -15,6 +15,8 @@ import io.modelcontextprotocol.server.McpRequestHandler;
 import io.modelcontextprotocol.server.McpTransportContext;
 import io.modelcontextprotocol.util.Assert;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -148,29 +150,31 @@ public class McpServerSession implements McpSession {
 	public <T> Mono<T> sendRequest(String method, Object requestParams, TypeReference<T> typeRef) {
 		String requestId = this.generateRequestId();
 
-		return Mono.<McpSchema.JSONRPCResponse>create(sink -> {
-			this.pendingResponses.put(requestId, sink);
-			McpSchema.JSONRPCRequest jsonrpcRequest = new McpSchema.JSONRPCRequest(McpSchema.JSONRPC_VERSION, method,
-					requestId, requestParams);
-			this.transport.sendMessage(jsonrpcRequest).subscribe(
-					v -> {},
-					error -> {
-						this.pendingResponses.remove(requestId);
-						sink.error(error);
-					});
-		}).timeout(requestTimeout).handle((jsonRpcResponse, sink) -> {
-			if (jsonRpcResponse.error() != null) {
-				sink.error(new McpError(jsonRpcResponse.error()));
-			}
-			else {
-				if (typeRef.getType().equals(Void.class)) {
-					sink.complete();
-				}
-				else {
-					sink.next(this.transport.unmarshalFrom(jsonRpcResponse.result(), typeRef));
-				}
-			}
-		});
+		return Mono
+				.<McpSchema.JSONRPCResponse>create(sink -> {
+					this.pendingResponses.put(requestId, sink);
+					McpSchema.JSONRPCRequest jsonrpcRequest = new McpSchema.JSONRPCRequest(McpSchema.JSONRPC_VERSION,
+							method,
+							requestId, requestParams);
+					this.transport.sendMessage(jsonrpcRequest).subscribe(
+							v -> {},
+							error -> {
+								this.pendingResponses.remove(requestId);
+								sink.error(error);
+							});
+				})
+				.timeout(requestTimeout)
+				.handle((jsonRpcResponse, sink) -> {
+					if (jsonRpcResponse.error() != null) {
+						sink.error(new McpError(jsonRpcResponse.error()));
+					} else {
+						if (typeRef.getType().equals(Void.class)) {
+							sink.complete();
+						} else {
+							sink.next(this.transport.unmarshalFrom(jsonRpcResponse.result(), typeRef));
+						}
+					}
+				});
 	}
 
 	@Override
@@ -254,9 +258,17 @@ public class McpServerSession implements McpSession {
 				var handler = this.requestHandlers.get(request.method());
 				if (handler == null) {
 					MethodNotFoundError error = getMethodNotFoundError(request.method());
-					return Mono.just(new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, request.id(), null,
-							new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.METHOD_NOT_FOUND,
-									error.message(), error.data())));
+					return Mono.just(
+							new McpSchema.JSONRPCResponse(
+									McpSchema.JSONRPC_VERSION,
+									request.id(),
+									null,
+									new McpSchema.JSONRPCResponse.JSONRPCError(
+											McpSchema.ErrorCodes.METHOD_NOT_FOUND,
+											error.message(),
+											error.data())
+							)
+					);
 				}
 
 				resultMono = this.exchangeSink.asMono().flatMap(exchange -> handler.handle(exchange, request.params()));
@@ -292,9 +304,6 @@ public class McpServerSession implements McpSession {
 			}
 			return this.exchangeSink.asMono().flatMap(exchange -> handler.handle(exchange, notification.params()));
 		});
-	}
-
-	record MethodNotFoundError(String method, String message, Object data) {
 	}
 
 	private MethodNotFoundError getMethodNotFoundError(String method) {
@@ -343,8 +352,7 @@ public class McpServerSession implements McpSession {
 	}
 
 	/**
-	 * A handler for client-initiated notifications.
-	 *
+	 * A handler for client-initiated notifications
 	 * @deprecated Use {@link McpNotificationHandler}
 	 */
 	@Deprecated
@@ -362,8 +370,7 @@ public class McpServerSession implements McpSession {
 	}
 
 	/**
-	 * A handler for client-initiated requests.
-	 *
+	 * A handler for client-initiated requests
 	 * @param <T> the type of the response that is expected as a result of handling the
 	 * request.
 	 * @deprecated Use {@link McpRequestHandler}
@@ -396,4 +403,16 @@ public class McpServerSession implements McpSession {
 		 */
 		McpServerSession create(McpServerTransport sessionTransport);
 	}
+
+	@RequiredArgsConstructor
+	@Accessors(fluent = true)
+	@Getter
+	private static class MethodNotFoundError {
+		private final String method;
+		private final String message;
+		private final Object data;
+	}
+
+
+
 }
