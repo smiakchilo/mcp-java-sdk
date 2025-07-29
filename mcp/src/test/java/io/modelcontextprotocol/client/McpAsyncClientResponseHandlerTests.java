@@ -320,9 +320,9 @@ class McpAsyncClientResponseHandlerTests {
 		assertThat(response.id()).isEqualTo("test-id");
 		assertThat(response.error()).isNull();
 
-		McpSchema.CreateMessageResult result = transport.unmarshalFrom(response.result(),
-				new TypeReference<McpSchema.CreateMessageResult>() {
-				});
+		McpSchema.CreateMessageResult result = transport.unmarshalFrom(
+				response.result(),
+				new TypeReference<McpSchema.CreateMessageResult>() {});
 		assertThat(result).isNotNull();
 		assertThat(result.role()).isEqualTo(McpSchema.Role.ASSISTANT);
 		assertThat(result.content()).isNotNull();

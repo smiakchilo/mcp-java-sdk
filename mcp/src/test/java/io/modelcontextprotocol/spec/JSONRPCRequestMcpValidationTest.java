@@ -40,9 +40,9 @@ public class JSONRPCRequestMcpValidationTest {
 
 	@Test
 	public void testNullIdThrowsException() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-			new McpSchema.JSONRPCRequest("2.0", "test/method", null, null);
-		});
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> new McpSchema.JSONRPCRequest("2.0", "test/method", null, null));
 
 		assertTrue(exception.getMessage().contains("MCP requests MUST include an ID"));
 		assertTrue(exception.getMessage().contains("null IDs are not allowed"));
@@ -50,36 +50,36 @@ public class JSONRPCRequestMcpValidationTest {
 
 	@Test
 	public void testDoubleIdTypeThrowsException() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-			new McpSchema.JSONRPCRequest("2.0", "test/method", 123.45, null);
-		});
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> new McpSchema.JSONRPCRequest("2.0", "test/method", 123.45, null));
 
 		assertTrue(exception.getMessage().contains("MCP requests MUST have an ID that is either a string or integer"));
 	}
 
 	@Test
 	public void testBooleanIdThrowsException() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-			new McpSchema.JSONRPCRequest("2.0", "test/method", true, null);
-		});
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> new McpSchema.JSONRPCRequest("2.0", "test/method", true, null));
 
 		assertTrue(exception.getMessage().contains("MCP requests MUST have an ID that is either a string or integer"));
 	}
 
 	@Test
 	public void testArrayIdThrowsException() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-			new McpSchema.JSONRPCRequest("2.0", "test/method", new String[] { "array" }, null);
-		});
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> new McpSchema.JSONRPCRequest("2.0", "test/method", new String[] { "array" }, null));
 
 		assertTrue(exception.getMessage().contains("MCP requests MUST have an ID that is either a string or integer"));
 	}
 
 	@Test
 	public void testObjectIdThrowsException() {
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-			new McpSchema.JSONRPCRequest("2.0", "test/method", new Object(), null);
-		});
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> new McpSchema.JSONRPCRequest("2.0", "test/method", new Object(), null));
 
 		assertTrue(exception.getMessage().contains("MCP requests MUST have an ID that is either a string or integer"));
 	}

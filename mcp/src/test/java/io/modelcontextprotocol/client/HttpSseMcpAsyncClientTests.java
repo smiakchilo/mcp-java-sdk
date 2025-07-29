@@ -24,10 +24,11 @@ class HttpSseMcpAsyncClientTests extends AbstractMcpAsyncClientTests {
 	// Uses the https://github.com/tzolov/mcp-everything-server-docker-image
 	@SuppressWarnings("resource")
 	GenericContainer<?> container = new GenericContainer<>("docker.io/tzolov/mcp-everything-server:v2")
-		.withCommand("node dist/index.js sse")
-		.withLogConsumer(outputFrame -> System.out.println(outputFrame.getUtf8String()))
-		.withExposedPorts(3001)
-		.waitingFor(Wait.forHttp("/").forStatusCode(404));
+			.withCommand("node dist/index.js sse")
+			.withLogConsumer(outputFrame -> System.out.println(outputFrame.getUtf8String()))
+			.withExposedPorts(3001)
+			.withStartupAttempts(3)
+			.waitingFor(Wait.forHttp("/").forStatusCode(404));
 
 	@Override
 	protected McpClientTransport createMcpTransport() {

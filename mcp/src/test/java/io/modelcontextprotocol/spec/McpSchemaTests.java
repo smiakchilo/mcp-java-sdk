@@ -56,7 +56,7 @@ public class McpSchemaTests {
 	}
 
 	@Test
-	void testContentDeserializationWrongType() throws Exception {
+	void testContentDeserializationWrongType() {
 
 		assertThatThrownBy(() -> mapper.readValue("""
 				{"type":"WRONG","text":"XXX"}""", McpSchema.TextContent.class))
@@ -210,7 +210,7 @@ public class McpSchemaTests {
 		assertThat(embeddedResource.resource().mimeType()).isEqualTo("application/octet-stream");
 		assertThat(((McpSchema.BlobResourceContents) embeddedResource.resource()).blob())
 			.isEqualTo("base64encodedblob");
-		assertThat(((McpSchema.BlobResourceContents) embeddedResource.resource()).meta()).containsKey("metaKey");
+		assertThat(embeddedResource.resource().meta()).containsKey("metaKey");
 	}
 
 	@Test

@@ -318,10 +318,10 @@ public abstract class AbstractMcpAsyncClientTests {
 			StepVerifier.create(mcpAsyncClient.initialize().then(mcpAsyncClient.listResources(McpSchema.FIRST_PAGE)))
 				.consumeNextWith(resources -> {
 					assertThat(resources).isNotNull().satisfies(result -> {
-						assertThat(result.resources()).isNotNull();
+						assertThat(result.getResources()).isNotNull();
 
-						if (!result.resources().isEmpty()) {
-							Resource firstResource = result.resources().get(0);
+						if (!result.getResources().isEmpty()) {
+							Resource firstResource = result.getResources().get(0);
 							assertThat(firstResource.uri()).isNotNull();
 							assertThat(firstResource.name()).isNotNull();
 						}
@@ -337,10 +337,10 @@ public abstract class AbstractMcpAsyncClientTests {
 			StepVerifier.create(mcpAsyncClient.initialize().then(mcpAsyncClient.listResources()))
 				.consumeNextWith(resources -> {
 					assertThat(resources).isNotNull().satisfies(result -> {
-						assertThat(result.resources()).isNotNull();
+						assertThat(result.getResources()).isNotNull();
 
-						if (!result.resources().isEmpty()) {
-							Resource firstResource = result.resources().get(0);
+						if (!result.getResources().isEmpty()) {
+							Resource firstResource = result.getResources().get(0);
 							assertThat(firstResource.uri()).isNotNull();
 							assertThat(firstResource.name()).isNotNull();
 						}
@@ -355,10 +355,10 @@ public abstract class AbstractMcpAsyncClientTests {
 		withClient(createMcpTransport(), mcpAsyncClient -> {
 			StepVerifier.create(mcpAsyncClient.initialize().then(mcpAsyncClient.listResources()))
 				.consumeNextWith(result -> {
-					assertThat(result.resources()).isNotNull();
+					assertThat(result.getResources()).isNotNull();
 					// Verify that the returned list is immutable
 					assertThatThrownBy(
-							() -> result.resources().add(Resource.builder().uri("test://uri").name("test").build()))
+							() -> result.getResources().add(Resource.builder().uri("test://uri").name("test").build()))
 						.isInstanceOf(UnsupportedOperationException.class);
 				})
 				.verifyComplete();
@@ -444,8 +444,8 @@ public abstract class AbstractMcpAsyncClientTests {
 					.then(mcpAsyncClient.getPrompt(new GetPromptRequest("simple_prompt", Map.of()))))
 				.consumeNextWith(prompt -> {
 					assertThat(prompt).isNotNull().satisfies(result -> {
-						assertThat(result.messages()).isNotEmpty();
-						assertThat(result.messages()).hasSize(1);
+						assertThat(result.getMessages()).isNotEmpty();
+						assertThat(result.getMessages()).hasSize(1);
 					});
 				})
 				.verifyComplete();
@@ -516,7 +516,7 @@ public abstract class AbstractMcpAsyncClientTests {
 		withClient(createMcpTransport(), client -> {
 			Flux<McpSchema.ReadResourceResult> resources = client.initialize()
 				.then(client.listResources(null))
-				.flatMapMany(r -> Flux.fromIterable(r.resources()))
+				.flatMapMany(r -> Flux.fromIterable(r.getResources()))
 				.flatMap(r -> client.readResource(r));
 
 			StepVerifier.create(resources).recordWith(ArrayList::new).consumeRecordedWith(readResourceResults -> {
@@ -524,10 +524,10 @@ public abstract class AbstractMcpAsyncClientTests {
 				for (ReadResourceResult result : readResourceResults) {
 
 					assertThat(result).isNotNull();
-					assertThat(result.contents()).isNotNull().isNotEmpty();
+					assertThat(result.getContents()).isNotNull().isNotEmpty();
 
 					// Validate each content item
-					for (ResourceContents content : result.contents()) {
+					for (ResourceContents content : result.getContents()) {
 						assertThat(content).isNotNull();
 						assertThat(content.uri()).isNotNull().isNotEmpty();
 						assertThat(content.mimeType()).isNotNull().isNotEmpty();
@@ -581,7 +581,7 @@ public abstract class AbstractMcpAsyncClientTests {
 				.create(mcpAsyncClient.initialize().then(mcpAsyncClient.listResourceTemplates(McpSchema.FIRST_PAGE)))
 				.consumeNextWith(result -> {
 					assertThat(result).isNotNull();
-					assertThat(result.resourceTemplates()).isNotNull();
+					assertThat(result.getResourceTemplates()).isNotNull();
 				})
 				.verifyComplete();
 		});
@@ -593,7 +593,7 @@ public abstract class AbstractMcpAsyncClientTests {
 			StepVerifier.create(mcpAsyncClient.initialize().then(mcpAsyncClient.listResourceTemplates()))
 				.consumeNextWith(result -> {
 					assertThat(result).isNotNull();
-					assertThat(result.resourceTemplates()).isNotNull();
+					assertThat(result.getResourceTemplates()).isNotNull();
 				})
 				.verifyComplete();
 		});
@@ -604,9 +604,9 @@ public abstract class AbstractMcpAsyncClientTests {
 		withClient(createMcpTransport(), mcpAsyncClient -> {
 			StepVerifier.create(mcpAsyncClient.initialize().then(mcpAsyncClient.listResourceTemplates()))
 				.consumeNextWith(result -> {
-					assertThat(result.resourceTemplates()).isNotNull();
+					assertThat(result.getResourceTemplates()).isNotNull();
 					// Verify that the returned list is immutable
-					assertThatThrownBy(() -> result.resourceTemplates()
+					assertThatThrownBy(() -> result.getResourceTemplates()
 						.add(new McpSchema.ResourceTemplate("test://template", "test", "test", null, null, null)))
 						.isInstanceOf(UnsupportedOperationException.class);
 				})
@@ -618,8 +618,8 @@ public abstract class AbstractMcpAsyncClientTests {
 	void testResourceSubscription() {
 		withClient(createMcpTransport(), mcpAsyncClient -> {
 			StepVerifier.create(mcpAsyncClient.listResources()).consumeNextWith(resources -> {
-				if (!resources.resources().isEmpty()) {
-					Resource firstResource = resources.resources().get(0);
+				if (!resources.getResources().isEmpty()) {
+					Resource firstResource = resources.getResources().get(0);
 
 					// Test subscribe
 					StepVerifier.create(mcpAsyncClient.subscribeResource(new SubscribeRequest(firstResource.uri())))
@@ -762,10 +762,10 @@ public abstract class AbstractMcpAsyncClientTests {
 		withClient(transport, spec -> spec.capabilities(McpSchema.ClientCapabilities.builder().sampling().build())
 			.sampling(request -> {
 				McpSchema.TextContent messageText = assertInstanceOf(McpSchema.TextContent.class,
-						request.messages().get(0).content());
-				receivedPrompt.set(request.systemPrompt());
+						request.getMessages().get(0).content());
+				receivedPrompt.set(request.getSystemPrompt());
 				receivedMessage.set(messageText.text());
-				receivedMaxTokens.set(request.maxTokens());
+				receivedMaxTokens.set(request.getMaxTokens());
 
 				return Mono
 					.just(new McpSchema.CreateMessageResult(McpSchema.Role.USER, new McpSchema.TextContent(response),

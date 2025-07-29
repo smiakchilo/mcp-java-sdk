@@ -1145,8 +1145,12 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	void testStructuredOutputValidationSuccess() {
 		// Create a tool with output schema
 		Map<String, Object> outputSchema = Map.of(
-				"type", "object", "properties", Map.of("result", Map.of("type", "number"), "operation",
-						Map.of("type", "string"), "timestamp", Map.of("type", "string")),
+				"type", "object",
+				"properties", Map.of(
+						"result", Map.of("type", "number"),
+						"operation", Map.of("type", "string"),
+						"timestamp", Map.of("type", "string")
+				),
 				"required", List.of("result", "operation"));
 
 		Tool calculatorTool = Tool.builder()

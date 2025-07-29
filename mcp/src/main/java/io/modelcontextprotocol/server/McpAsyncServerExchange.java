@@ -15,6 +15,7 @@ import io.modelcontextprotocol.spec.McpSchema.LoggingLevel;
 import io.modelcontextprotocol.spec.McpSchema.LoggingMessageNotification;
 import io.modelcontextprotocol.spec.McpSession;
 import io.modelcontextprotocol.util.Assert;
+import lombok.Getter;
 import reactor.core.publisher.Mono;
 
 /**
@@ -26,14 +27,32 @@ import reactor.core.publisher.Mono;
  */
 public class McpAsyncServerExchange {
 
+    /**
+     * Provides the Session ID
+     */
+    @Getter
 	private final String sessionId;
 
 	private final McpLoggableSession session;
 
-	private final McpSchema.ClientCapabilities clientCapabilities;
+    /**
+     * Get the client capabilities that define the supported features and functionality
+     */
+    @Getter
+    private final McpSchema.ClientCapabilities clientCapabilities;
 
-	private final McpSchema.Implementation clientInfo;
+    /**
+     * Get the client implementation information
+     */
+    @Getter
+    private final McpSchema.Implementation clientInfo;
 
+    /**
+     * Provides the {@link McpTransportContext} associated with the transport layer. For
+     * HTTP transports it can contain the metadata associated with the HTTP request that
+     * triggered the processing
+     */
+    @Getter
 	private final McpTransportContext transportContext;
 
 	private static final TypeReference<McpSchema.CreateMessageResult> CREATE_MESSAGE_RESULT_TYPE_REF = new TypeReference<>() {
@@ -89,41 +108,7 @@ public class McpAsyncServerExchange {
 		this.transportContext = transportContext;
 	}
 
-	/**
-	 * Get the client capabilities that define the supported features and functionality.
-	 * @return The client capabilities
-	 */
-	public McpSchema.ClientCapabilities getClientCapabilities() {
-		return this.clientCapabilities;
-	}
-
-	/**
-	 * Get the client implementation information.
-	 * @return The client implementation details
-	 */
-	public McpSchema.Implementation getClientInfo() {
-		return this.clientInfo;
-	}
-
-	/**
-	 * Provides the {@link McpTransportContext} associated with the transport layer. For
-	 * HTTP transports it can contain the metadata associated with the HTTP request that
-	 * triggered the processing.
-	 * @return the transport context object
-	 */
-	public McpTransportContext transportContext() {
-		return this.transportContext;
-	}
-
-	/**
-	 * Provides the Session ID.
-	 * @return session ID string
-	 */
-	public String sessionId() {
-		return this.sessionId;
-	}
-
-	/**
+    /**
 	 * Create a new message using the sampling capabilities of the client. The Model
 	 * Context Protocol (MCP) provides a standardized way for servers to request LLM
 	 * sampling (“completions” or “generations”) from language models via clients. This

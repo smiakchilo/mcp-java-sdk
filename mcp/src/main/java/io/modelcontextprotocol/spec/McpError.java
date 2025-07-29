@@ -4,7 +4,9 @@
 package io.modelcontextprotocol.spec;
 
 import io.modelcontextprotocol.spec.McpSchema.JSONRPCResponse.JSONRPCError;
+import lombok.Getter;
 
+@Getter
 public class McpError extends RuntimeException {
 
 	private JSONRPCError jsonRpcError;
@@ -16,10 +18,6 @@ public class McpError extends RuntimeException {
 
 	public McpError(Object error) {
 		super(error.toString());
-	}
-
-	public JSONRPCError getJsonRpcError() {
-		return jsonRpcError;
 	}
 
 }

@@ -153,15 +153,19 @@ public class McpServerSession implements McpSession {
 		return Mono
 				.<McpSchema.JSONRPCResponse>create(sink -> {
 					this.pendingResponses.put(requestId, sink);
-					McpSchema.JSONRPCRequest jsonrpcRequest = new McpSchema.JSONRPCRequest(McpSchema.JSONRPC_VERSION,
+					McpSchema.JSONRPCRequest jsonrpcRequest = new McpSchema.JSONRPCRequest(
+							McpSchema.JSONRPC_VERSION,
 							method,
-							requestId, requestParams);
-					this.transport.sendMessage(jsonrpcRequest).subscribe(
-							v -> {},
-							error -> {
-								this.pendingResponses.remove(requestId);
-								sink.error(error);
-							});
+							requestId,
+							requestParams);
+					this.transport
+							.sendMessage(jsonrpcRequest)
+							.subscribe(
+									v -> {},
+									error -> {
+										this.pendingResponses.remove(requestId);
+										sink.error(error);
+									});
 				})
 				.timeout(requestTimeout)
 				.handle((jsonRpcResponse, sink) -> {
@@ -275,10 +279,17 @@ public class McpServerSession implements McpSession {
 			}
 			return resultMono
 				.map(result -> new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, request.id(), result, null))
-				.onErrorResume(error -> Mono.just(new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, request.id(),
-						null, new McpSchema.JSONRPCResponse.JSONRPCError(McpSchema.ErrorCodes.INTERNAL_ERROR,
-								error.getMessage(), null)))); // TODO: add error message
-																// through the data field
+				.onErrorResume(error -> Mono.just(
+						new McpSchema.JSONRPCResponse(
+								McpSchema.JSONRPC_VERSION,
+								request.id(),
+								null,
+								new McpSchema.JSONRPCResponse.JSONRPCError(
+										McpSchema.ErrorCodes.INTERNAL_ERROR,
+										error.getMessage(),
+										null))
+						)
+				); // TODO: add error message through the data field
 		});
 	}
 
@@ -302,7 +313,9 @@ public class McpServerSession implements McpSession {
 				logger.error("No handler registered for notification method: {}", notification.method());
 				return Mono.empty();
 			}
-			return this.exchangeSink.asMono().flatMap(exchange -> handler.handle(exchange, notification.params()));
+			return this.exchangeSink
+					.asMono()
+					.flatMap(exchange -> handler.handle(exchange, notification.params()));
 		});
 	}
 

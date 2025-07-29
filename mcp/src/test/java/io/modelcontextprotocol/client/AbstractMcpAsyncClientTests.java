@@ -518,7 +518,7 @@ public abstract class AbstractMcpAsyncClientTests {
 			Flux<McpSchema.ReadResourceResult> resources = client.initialize()
 				.then(client.listResources(null))
 				.flatMapMany(r -> Flux.fromIterable(r.resources()))
-				.flatMap(r -> client.readResource(r));
+				.flatMap(client::readResource);
 
 			StepVerifier.create(resources).recordWith(ArrayList::new).consumeRecordedWith(readResourceResults -> {
 

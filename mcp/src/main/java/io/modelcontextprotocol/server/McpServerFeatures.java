@@ -381,7 +381,7 @@ public class McpServerFeatures {
 	 * new McpServerFeatures.AsyncPromptSpecification(
 	 * 		new Prompt("analyze", "Code analysis template"),
 	 * 		(exchange, request) -> {
-	 * 			String code = request.getArguments().get("code");
+	 * 			String code = request.arguments().get("code");
 	 * 			return Mono.just(new GetPromptResult(
 	 * 					"Analyze this code:\n\n" + code + "\n\nProvide feedback on:"));
 	 * 		})
@@ -596,7 +596,7 @@ public class McpServerFeatures {
 	 * new McpServerFeatures.SyncPromptSpecification(
 	 * 		new Prompt("analyze", "Code analysis template"),
 	 * 		(exchange, request) -> {
-	 * 			String code = request.getArguments().get("code");
+	 * 			String code = request.arguments().get("code");
 	 * 			return new GetPromptResult(
 	 * 					"Analyze this code:\n\n" + code + "\n\nProvide feedback on:");
 	 * 		})

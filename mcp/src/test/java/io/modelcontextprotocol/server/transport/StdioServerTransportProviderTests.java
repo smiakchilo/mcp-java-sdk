@@ -125,18 +125,23 @@ class StdioServerTransportProviderTests {
 		transportProvider.setSessionFactory(realSessionFactory);
 
 		// Wait for the message to be processed using the latch
-		StepVerifier.create(Mono.fromCallable(() -> messageLatch.await(100, TimeUnit.SECONDS)).flatMap(success -> {
-			if (!success) {
-				return Mono.error(new AssertionError("Timeout waiting for message processing"));
-			}
-			return Mono.just(capturedMessage.get());
-		})).assertNext(message -> {
-			assertThat(message).isNotNull();
-			assertThat(message).isInstanceOf(McpSchema.JSONRPCRequest.class);
-			McpSchema.JSONRPCRequest request = (McpSchema.JSONRPCRequest) message;
-			assertThat(request.method()).isEqualTo("test");
-			assertThat(request.id()).isEqualTo(1);
-		}).verifyComplete();
+		StepVerifier
+				.create(Mono
+						.fromCallable(() -> messageLatch.await(100, TimeUnit.SECONDS))
+						.flatMap(success -> {
+							if (!success) {
+								return Mono.error(new AssertionError("Timeout waiting for message processing"));
+							}
+							return Mono.just(capturedMessage.get());
+						}))
+				.assertNext(message -> {
+					assertThat(message).isNotNull();
+					assertThat(message).isInstanceOf(McpSchema.JSONRPCRequest.class);
+					McpSchema.JSONRPCRequest request = (McpSchema.JSONRPCRequest) message;
+					assertThat(request.method()).isEqualTo("test");
+					assertThat(request.id()).isEqualTo(1);
+				})
+				.verifyComplete();
 	}
 
 	@Test

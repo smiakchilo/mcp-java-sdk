@@ -49,12 +49,13 @@ public abstract class AbstractMcpAsyncClientResiliencyTests {
 	// Uses the https://github.com/tzolov/mcp-everything-server-docker-image
 	@SuppressWarnings("resource")
 	static GenericContainer<?> container = new GenericContainer<>("docker.io/tzolov/mcp-everything-server:v2")
-		.withCommand("node dist/index.js streamableHttp")
-		.withLogConsumer(outputFrame -> System.out.println(outputFrame.getUtf8String()))
-		.withNetwork(network)
-		.withNetworkAliases("everything-server")
-		.withExposedPorts(3001)
-		.waitingFor(Wait.forHttp("/").forStatusCode(404));
+			.withCommand("node dist/index.js streamableHttp")
+			.withLogConsumer(outputFrame -> System.out.println(outputFrame.getUtf8String()))
+			.withNetwork(network)
+			.withNetworkAliases("everything-server")
+			.withExposedPorts(3001)
+			.withStartupAttempts(3)
+			.waitingFor(Wait.forHttp("/").forStatusCode(404));
 
 	static ToxiproxyContainer toxiproxy = new ToxiproxyContainer("ghcr.io/shopify/toxiproxy:2.5.0").withNetwork(network)
 		.withExposedPorts(8474, 3000);

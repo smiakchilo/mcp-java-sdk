@@ -46,7 +46,10 @@ class McpClientSessionTests {
 	@BeforeEach
 	void setUp() {
 		transport = new MockMcpClientTransport();
-		session = new McpClientSession(TIMEOUT, transport, Map.of(),
+		session = new McpClientSession(
+				TIMEOUT,
+				transport,
+				Map.of(),
 				Map.of(TEST_NOTIFICATION, params -> Mono.fromRunnable(() -> logger.info("Status update: {}", params))));
 	}
 
@@ -59,11 +62,19 @@ class McpClientSessionTests {
 
 	@Test
 	void testConstructorWithInvalidArguments() {
-		assertThatThrownBy(() -> new McpClientSession(null, transport, Map.of(), Map.of()))
+		assertThatThrownBy(() -> new McpClientSession(
+				null,
+				transport,
+				Map.of(),
+				Map.of()))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("The requestTimeout can not be null");
 
-		assertThatThrownBy(() -> new McpClientSession(TIMEOUT, null, Map.of(), Map.of()))
+		assertThatThrownBy(() -> new McpClientSession(
+				TIMEOUT,
+				null,
+				Map.of(),
+				Map.of()))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("transport can not be null");
 	}
@@ -85,11 +96,10 @@ class McpClientSessionTests {
 					new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, request.id(), responseData, null));
 		}).consumeNextWith(response -> {
 			// Verify the request was sent
-			McpSchema.JSONRPCMessage sentMessage = transport.getLastSentMessageAsRequest();
+			McpSchema.JSONRPCRequest sentMessage = transport.getLastSentMessageAsRequest();
 			assertThat(sentMessage).isInstanceOf(McpSchema.JSONRPCRequest.class);
-			McpSchema.JSONRPCRequest request = (McpSchema.JSONRPCRequest) sentMessage;
-			assertThat(request.method()).isEqualTo(TEST_METHOD);
-			assertThat(request.params()).isEqualTo(testParam);
+            assertThat(sentMessage.method()).isEqualTo(TEST_METHOD);
+			assertThat(sentMessage.params()).isEqualTo(testParam);
 			assertThat(response).isEqualTo(responseData);
 		}).verifyComplete();
 	}
@@ -138,7 +148,7 @@ class McpClientSessionTests {
 	void testRequestHandling() {
 		String echoMessage = "Hello MCP!";
 		Map<String, McpClientSession.RequestHandler<?>> requestHandlers = Map.of(ECHO_METHOD,
-				params -> Mono.just(params));
+                Mono::just);
 		transport = new MockMcpClientTransport();
 		session = new McpClientSession(TIMEOUT, transport, requestHandlers, Map.of());
 
@@ -160,7 +170,10 @@ class McpClientSessionTests {
 		Sinks.One<Object> receivedParams = Sinks.one();
 
 		transport = new MockMcpClientTransport();
-		session = new McpClientSession(TIMEOUT, transport, Map.of(),
+		session = new McpClientSession(
+				TIMEOUT,
+				transport,
+				Map.of(),
 				Map.of(TEST_NOTIFICATION, params -> Mono.fromRunnable(() -> receivedParams.tryEmitValue(params))));
 
 		// Simulate incoming notification from the server

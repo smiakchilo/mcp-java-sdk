@@ -268,12 +268,15 @@ public class McpClientSession implements McpSession {
 					McpSchema.JSONRPCRequest jsonrpcRequest = new McpSchema.JSONRPCRequest(McpSchema.JSONRPC_VERSION,
 							method,
 							requestId, requestParams);
-					this.transport.sendMessage(jsonrpcRequest).contextWrite(ctx).subscribe(
-							v -> {},
-							error -> {
-								this.pendingResponses.remove(requestId);
-								pendingResponseSink.error(error);
-							});
+					this.transport
+							.sendMessage(jsonrpcRequest)
+							.contextWrite(ctx)
+							.subscribe(
+									v -> {},
+									error -> {
+										this.pendingResponses.remove(requestId);
+										pendingResponseSink.error(error);
+									});
 				}))
 				.timeout(this.requestTimeout)
 				.handle((jsonRpcResponse, deliveredResponseSink) -> {
@@ -284,8 +287,7 @@ public class McpClientSession implements McpSession {
 						if (typeRef.getType().equals(Void.class)) {
 							deliveredResponseSink.complete();
 						} else {
-							deliveredResponseSink.next(this.transport.unmarshalFrom(jsonRpcResponse.result(),
-									typeRef));
+							deliveredResponseSink.next(this.transport.unmarshalFrom(jsonRpcResponse.result(), typeRef));
 						}
 					}
 				});
