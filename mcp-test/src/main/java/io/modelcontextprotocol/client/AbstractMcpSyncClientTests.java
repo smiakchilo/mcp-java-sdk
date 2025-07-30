@@ -338,10 +338,10 @@ public abstract class AbstractMcpSyncClientTests {
 			ListResourcesResult resources = mcpSyncClient.listResources(McpSchema.FIRST_PAGE);
 
 			assertThat(resources).isNotNull().satisfies(result -> {
-				assertThat(result.getResources()).isNotNull();
+				assertThat(result.resources()).isNotNull();
 
-				if (!result.getResources().isEmpty()) {
-					Resource firstResource = result.getResources().get(0);
+				if (!result.resources().isEmpty()) {
+					Resource firstResource = result.resources().get(0);
 					assertThat(firstResource.uri()).isNotNull();
 					assertThat(firstResource.name()).isNotNull();
 				}
@@ -356,10 +356,10 @@ public abstract class AbstractMcpSyncClientTests {
 			ListResourcesResult resources = mcpSyncClient.listResources();
 
 			assertThat(resources).isNotNull().satisfies(result -> {
-				assertThat(result.getResources()).isNotNull();
+				assertThat(result.resources()).isNotNull();
 
-				if (!result.getResources().isEmpty()) {
-					Resource firstResource = result.getResources().get(0);
+				if (!result.resources().isEmpty()) {
+					Resource firstResource = result.resources().get(0);
 					assertThat(firstResource.uri()).isNotNull();
 					assertThat(firstResource.name()).isNotNull();
 				}
@@ -425,7 +425,7 @@ public abstract class AbstractMcpSyncClientTests {
 		AtomicReference<List<Resource>> resources = new AtomicReference<>();
 		withClient(createMcpTransport(), mcpSyncClient -> {
 			mcpSyncClient.initialize();
-			resources.set(mcpSyncClient.listResources().getResources());
+			resources.set(mcpSyncClient.listResources().resources());
 		});
 
 		verifyCallSucceedsWithImplicitInitialization(client -> client.readResource(resources.get().get(0)),
@@ -442,21 +442,21 @@ public abstract class AbstractMcpSyncClientTests {
 			ListResourcesResult resources = mcpSyncClient.listResources(null);
 
 			assertThat(resources).isNotNull();
-			assertThat(resources.getResources()).isNotNull();
+			assertThat(resources.resources()).isNotNull();
 
-			assertThat(resources.getResources()).isNotNull().isNotEmpty();
+			assertThat(resources.resources()).isNotNull().isNotEmpty();
 
 			// Test reading each resource individually for better error isolation
-			for (Resource resource : resources.getResources()) {
+			for (Resource resource : resources.resources()) {
 				ReadResourceResult result = mcpSyncClient.readResource(resource);
 
 				assertThat(result).isNotNull();
-				assertThat(result.getContents()).isNotNull().isNotEmpty();
+				assertThat(result.contents()).isNotNull().isNotEmpty();
 
 				readResourceCount++;
 
 				// Validate each content item
-				for (ResourceContents content : result.getContents()) {
+				for (ResourceContents content : result.contents()) {
 					assertThat(content).isNotNull();
 					assertThat(content.uri()).isNotNull().isNotEmpty();
 					assertThat(content.mimeType()).isNotNull().isNotEmpty();
@@ -515,7 +515,7 @@ public abstract class AbstractMcpSyncClientTests {
 			ListResourceTemplatesResult result = mcpSyncClient.listResourceTemplates(McpSchema.FIRST_PAGE);
 
 			assertThat(result).isNotNull();
-			assertThat(result.getResourceTemplates()).isNotNull();
+			assertThat(result.resourceTemplates()).isNotNull();
 		});
 	}
 
@@ -526,7 +526,7 @@ public abstract class AbstractMcpSyncClientTests {
 			ListResourceTemplatesResult result = mcpSyncClient.listResourceTemplates();
 
 			assertThat(result).isNotNull();
-			assertThat(result.getResourceTemplates()).isNotNull();
+			assertThat(result.resourceTemplates()).isNotNull();
 		});
 	}
 
@@ -535,8 +535,8 @@ public abstract class AbstractMcpSyncClientTests {
 		withClient(createMcpTransport(), mcpSyncClient -> {
 			ListResourcesResult resources = mcpSyncClient.listResources(null);
 
-			if (!resources.getResources().isEmpty()) {
-				Resource firstResource = resources.getResources().get(0);
+			if (!resources.resources().isEmpty()) {
+				Resource firstResource = resources.resources().get(0);
 
 				// Test subscribe
 				assertThatCode(() -> mcpSyncClient.subscribeResource(new SubscribeRequest(firstResource.uri())))
@@ -622,10 +622,10 @@ public abstract class AbstractMcpSyncClientTests {
 		withClient(transport, spec -> spec.capabilities(McpSchema.ClientCapabilities.builder().sampling().build())
 			.sampling(request -> {
 				McpSchema.TextContent messageText = assertInstanceOf(McpSchema.TextContent.class,
-						request.getMessages().get(0).content());
-				receivedPrompt.set(request.getSystemPrompt());
+						request.messages().get(0).content());
+				receivedPrompt.set(request.systemPrompt());
 				receivedMessage.set(messageText.text());
-				receivedMaxTokens.set(request.getMaxTokens());
+				receivedMaxTokens.set(request.maxTokens());
 
 				return new McpSchema.CreateMessageResult(McpSchema.Role.USER, new McpSchema.TextContent(response),
 						"modelId", McpSchema.CreateMessageResult.StopReason.END_TURN);
