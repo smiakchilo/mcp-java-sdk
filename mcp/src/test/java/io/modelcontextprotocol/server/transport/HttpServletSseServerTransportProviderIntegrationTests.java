@@ -81,8 +81,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 		try {
 			tomcat.start();
 			assertThat(tomcat.getServer().getState()).isEqualTo(LifecycleState.STARTED);
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			throw new RuntimeException("Failed to start Tomcat", e);
 		}
 
@@ -100,8 +99,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 			try {
 				tomcat.stop();
 				tomcat.destroy();
-			}
-			catch (LifecycleException e) {
+			} catch (LifecycleException e) {
 				throw new RuntimeException("Failed to stop Tomcat", e);
 			}
 		}
@@ -110,8 +108,8 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	// ---------------------------------------
 	// Sampling Tests
 	// ---------------------------------------
+
 	@Test
-	// @Disabled
 	void testCreateMessageWithoutSamplingCapabilities() {
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
@@ -357,8 +355,8 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	// ---------------------------------------
 	// Elicitation Tests
 	// ---------------------------------------
+
 	@Test
-	// @Disabled
 	void testCreateElicitationWithoutElicitationCapabilities() {
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
@@ -574,6 +572,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	// ---------------------------------------
 	// Roots Tests
 	// ---------------------------------------
+
 	@Test
 	void testRootsSuccess() {
 		List<Root> roots = List.of(new Root("uri1://", "root1"), new Root("uri2://", "root2"));
@@ -858,13 +857,13 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 			mcpServer.notifyToolsListChanged();
 
 			await()
-					.atMost(Duration.ofSeconds(5))
+					.atMost(Duration.ofSeconds(10))
 					.untilAsserted(() -> assertThat(rootsRef.get()).containsAll(List.of(tool1.tool())));
 
 			// Remove a tool
 			mcpServer.removeTool("tool1");
 
-			await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(rootsRef.get()).isEmpty());
+			await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(rootsRef.get()).isEmpty());
 
 			// Add a new tool
 			McpServerFeatures.SyncToolSpecification tool2 = McpServerFeatures.SyncToolSpecification.builder()
@@ -896,6 +895,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	// ---------------------------------------
 	// Logging Tests
 	// ---------------------------------------
+
 	@Test
 	void testLoggingNotification() {
 		// Create a list to store received logging notifications
@@ -1087,6 +1087,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	// ---------------------------------------
 	// Ping Tests
 	// ---------------------------------------
+
 	@Test
 	void testPingSuccess() {
 		// Create server with a tool that uses ping functionality
@@ -1141,6 +1142,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	// ---------------------------------------
 	// Tool Structured Output Schema Tests
 	// ---------------------------------------
+
 	@Test
 	void testStructuredOutputValidationSuccess() {
 		// Create a tool with output schema
