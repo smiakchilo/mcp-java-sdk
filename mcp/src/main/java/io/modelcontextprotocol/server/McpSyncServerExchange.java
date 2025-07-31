@@ -32,7 +32,7 @@ public class McpSyncServerExchange {
 	 * @return session ID
 	 */
 	public String sessionId() {
-		return this.exchange.sessionId();
+		return this.exchange.getSessionId();
 	}
 
 	/**
@@ -58,7 +58,7 @@ public class McpSyncServerExchange {
 	 * @return the transport context object
 	 */
 	public McpTransportContext transportContext() {
-		return this.exchange.transportContext();
+		return this.exchange.getTransportContext();
 	}
 
 	/**

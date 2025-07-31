@@ -131,6 +131,7 @@ import reactor.core.publisher.Mono;
  * @see McpSyncServer
  * @see McpServerTransportProvider
  */
+@SuppressWarnings("unused")
 public interface McpServer {
 
 	McpSchema.Implementation DEFAULT_SERVER_INFO = new McpSchema.Implementation("mcp-server", "1.0.0");
@@ -265,7 +266,7 @@ public interface McpServer {
 	/**
 	 * Asynchronous server specification.
 	 */
-	abstract class AsyncSpecification<S extends AsyncSpecification<S>> {
+    abstract class AsyncSpecification<S extends AsyncSpecification<S>> {
 
 		McpUriTemplateManagerFactory uriTemplateManagerFactory = new DeafaultMcpUriTemplateManagerFactory();
 
@@ -1842,18 +1843,32 @@ public interface McpServer {
 		}
 
 		public McpStatelessAsyncServer build() {
-			var features = new McpStatelessServerFeatures.Async(this.serverInfo, this.serverCapabilities, this.tools,
-					this.resources, this.resourceTemplates, this.prompts, this.completions, this.instructions);
-			var mapper = this.objectMapper != null ? this.objectMapper : new ObjectMapper();
-			var jsonSchemaValidator = this.jsonSchemaValidator != null ? this.jsonSchemaValidator
+			var features = new McpStatelessServerFeatures.Async(
+					this.serverInfo,
+					this.serverCapabilities,
+					this.tools,
+					this.resources,
+					this.resourceTemplates,
+					this.prompts,
+					this.completions,
+					this.instructions);
+			var mapper = this.objectMapper != null
+					? this.objectMapper
+					: new ObjectMapper();
+			var jsonSchemaValidator = this.jsonSchemaValidator != null
+					? this.jsonSchemaValidator
 					: new DefaultJsonSchemaValidator(mapper);
-			return new McpStatelessAsyncServer(this.transport, mapper, features, this.requestTimeout,
-					this.uriTemplateManagerFactory, jsonSchemaValidator);
+			return new McpStatelessAsyncServer(
+					this.transport,
+					mapper,
+					features,
+					this.uriTemplateManagerFactory,
+					jsonSchemaValidator);
 		}
 
 	}
 
-	class StatelessSyncSpecification {
+    class StatelessSyncSpecification {
 
 		private final McpStatelessServerTransport transport;
 
@@ -2175,9 +2190,7 @@ public interface McpServer {
 		 */
 		public StatelessSyncSpecification resourceTemplates(ResourceTemplate... resourceTemplates) {
 			Assert.notNull(resourceTemplates, "Resource templates must not be null");
-			for (ResourceTemplate resourceTemplate : resourceTemplates) {
-				this.resourceTemplates.add(resourceTemplate);
-			}
+            this.resourceTemplates.addAll(Arrays.asList(resourceTemplates));
 			return this;
 		}
 
@@ -2337,14 +2350,30 @@ public interface McpServer {
 			 *
 			 * return new McpSyncServer(asyncServer, this.immediateExecution);
 			 */
-			var syncFeatures = new McpStatelessServerFeatures.Sync(this.serverInfo, this.serverCapabilities, this.tools,
-					this.resources, this.resourceTemplates, this.prompts, this.completions, this.instructions);
+			var syncFeatures = new McpStatelessServerFeatures.Sync(
+					this.serverInfo,
+					this.serverCapabilities,
+					this.tools,
+					this.resources,
+					this.resourceTemplates,
+					this.prompts,
+					this.completions,
+					this.instructions);
 			var asyncFeatures = McpStatelessServerFeatures.Async.fromSync(syncFeatures, this.immediateExecution);
+
 			var mapper = this.objectMapper != null ? this.objectMapper : new ObjectMapper();
-			var jsonSchemaValidator = this.jsonSchemaValidator != null ? this.jsonSchemaValidator
+
+			var jsonSchemaValidator = this.jsonSchemaValidator != null
+					? this.jsonSchemaValidator
 					: new DefaultJsonSchemaValidator(mapper);
-			var asyncServer = new McpStatelessAsyncServer(this.transport, mapper, asyncFeatures, this.requestTimeout,
-					this.uriTemplateManagerFactory, jsonSchemaValidator);
+
+			var asyncServer = new McpStatelessAsyncServer(
+					this.transport,
+					mapper,
+					asyncFeatures,
+					this.uriTemplateManagerFactory,
+					jsonSchemaValidator);
+
 			return new McpStatelessSyncServer(asyncServer, this.immediateExecution);
 		}
 

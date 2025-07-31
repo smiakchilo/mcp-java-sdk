@@ -80,7 +80,7 @@ class DefaultJsonSchemaValidatorTests {
 		String contentJson = "{\"test\": \"value\"}";
 
 		ValidationResponse response = defaultValidator.validate(toMap(schemaJson), toMap(contentJson));
-		assertTrue(response.isValid());
+		assertTrue(response.valid());
 	}
 
 	@Test
@@ -92,7 +92,7 @@ class DefaultJsonSchemaValidatorTests {
 		String contentJson = "{\"test\": \"value\"}";
 
 		ValidationResponse response = customValidator.validate(toMap(schemaJson), toMap(contentJson));
-		assertTrue(response.isValid());
+		assertTrue(response.valid());
 	}
 
 	@Test
@@ -106,9 +106,9 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertTrue(response.isValid());
-		assertNull(response.getErrorMessage());
-		assertNotNull(response.getJsonStructuredOutput());
+		assertTrue(response.valid());
+		assertNull(response.errorMessage());
+		assertNotNull(response.jsonStructuredOutput());
 	}
 
 	@Test
@@ -122,8 +122,8 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertTrue(response.isValid());
-		assertNull(response.getErrorMessage());
+		assertTrue(response.valid());
+		assertNull(response.errorMessage());
 	}
 
 	@Test
@@ -137,8 +137,8 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertTrue(response.isValid());
-		assertNull(response.getErrorMessage());
+		assertTrue(response.valid());
+		assertNull(response.errorMessage());
 	}
 
 	@Test
@@ -152,10 +152,10 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertFalse(response.isValid());
-		assertNotNull(response.getErrorMessage());
-		assertTrue(response.getErrorMessage().contains("Validation failed"));
-		assertTrue(response.getErrorMessage().contains("structuredContent does not match tool outputSchema"));
+		assertFalse(response.valid());
+		assertNotNull(response.errorMessage());
+		assertTrue(response.errorMessage().contains("Validation failed"));
+		assertTrue(response.errorMessage().contains("structuredContent does not match tool outputSchema"));
 	}
 
 	@Test
@@ -169,9 +169,9 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertFalse(response.isValid());
-		assertNotNull(response.getErrorMessage());
-		assertTrue(response.getErrorMessage().contains("Validation failed"));
+		assertFalse(response.valid());
+		assertNotNull(response.errorMessage());
+		assertTrue(response.errorMessage().contains("Validation failed"));
 	}
 
 	@Test
@@ -184,9 +184,9 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertFalse(response.isValid());
-		assertNotNull(response.getErrorMessage());
-		assertTrue(response.getErrorMessage().contains("Validation failed"));
+		assertFalse(response.valid());
+		assertNotNull(response.errorMessage());
+		assertTrue(response.errorMessage().contains("Validation failed"));
 	}
 
 	@Test
@@ -200,8 +200,8 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertTrue(response.isValid());
-		assertNull(response.getErrorMessage());
+		assertTrue(response.valid());
+		assertNull(response.errorMessage());
 	}
 
 	@Test
@@ -215,9 +215,9 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertFalse(response.isValid());
-		assertNotNull(response.getErrorMessage());
-		assertTrue(response.getErrorMessage().contains("Validation failed"));
+		assertFalse(response.valid());
+		assertNotNull(response.errorMessage());
+		assertTrue(response.errorMessage().contains("Validation failed"));
 	}
 
 	@Test
@@ -230,8 +230,8 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertTrue(response.isValid());
-		assertNull(response.getErrorMessage());
+		assertTrue(response.valid());
+		assertNull(response.errorMessage());
 	}
 
 	@Test
@@ -244,8 +244,8 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertTrue(response.isValid());
-		assertNull(response.getErrorMessage());
+		assertTrue(response.valid());
+		assertNull(response.errorMessage());
 	}
 
 	@Test
@@ -261,8 +261,8 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertTrue(response.isValid());
-		assertNull(response.getErrorMessage());
+		assertTrue(response.valid());
+		assertNull(response.errorMessage());
 	}
 
 	@Test
@@ -278,9 +278,9 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validator.validate(schema, structuredContent);
 
-		assertFalse(response.isValid());
-		assertNotNull(response.getErrorMessage());
-		assertTrue(response.getErrorMessage().contains("Validation failed"));
+		assertFalse(response.valid());
+		assertNotNull(response.errorMessage());
+		assertTrue(response.errorMessage().contains("Validation failed"));
 	}
 
 	@Test
@@ -295,10 +295,10 @@ class DefaultJsonSchemaValidatorTests {
 
 		ValidationResponse response = validatorWithMockMapper.validate(schema, structuredContent);
 
-		assertFalse(response.isValid());
-		assertNotNull(response.getErrorMessage());
-		assertTrue(response.getErrorMessage().contains("Error parsing tool JSON Schema"));
-		assertTrue(response.getErrorMessage().contains("Failed to convert schema to JsonNode"));
+		assertFalse(response.valid());
+		assertNotNull(response.errorMessage());
+		assertTrue(response.errorMessage().contains("Error parsing tool JSON Schema"));
+		assertTrue(response.errorMessage().contains("Failed to convert schema to JsonNode"));
 	}
 
 	@ParameterizedTest
@@ -306,8 +306,8 @@ class DefaultJsonSchemaValidatorTests {
 	void testValidateWithVariousValidInputs(Map<String, Object> schema, Map<String, Object> content) {
 		ValidationResponse response = validator.validate(schema, content);
 
-		assertTrue(response.isValid(), "Expected validation to pass for schema: " + schema + " and content: " + content);
-		assertNull(response.getErrorMessage());
+		assertTrue(response.valid(), "Expected validation to pass for schema: " + schema + " and content: " + content);
+		assertNull(response.errorMessage());
 	}
 
 	@ParameterizedTest
@@ -315,9 +315,9 @@ class DefaultJsonSchemaValidatorTests {
 	void testValidateWithVariousInvalidInputs(Map<String, Object> schema, Map<String, Object> content) {
 		ValidationResponse response = validator.validate(schema, content);
 
-		assertFalse(response.isValid(), "Expected validation to fail for schema: " + schema + " and content: " + content);
-		assertNotNull(response.getErrorMessage());
-		assertTrue(response.getErrorMessage().contains("Validation failed"));
+		assertFalse(response.valid(), "Expected validation to fail for schema: " + schema + " and content: " + content);
+		assertNotNull(response.errorMessage());
+		assertTrue(response.errorMessage().contains("Validation failed"));
 	}
 
 	private static Map<String, Object> staticToMap(String json) {
@@ -377,18 +377,18 @@ class DefaultJsonSchemaValidatorTests {
 	void testValidationResponseToValid() {
 		String jsonOutput = "{\"test\":\"value\"}";
 		ValidationResponse response = ValidationResponse.asValid(jsonOutput);
-		assertTrue(response.isValid());
-		assertNull(response.getErrorMessage());
-		assertEquals(jsonOutput, response.getJsonStructuredOutput());
+		assertTrue(response.valid());
+		assertNull(response.errorMessage());
+		assertEquals(jsonOutput, response.jsonStructuredOutput());
 	}
 
 	@Test
 	void testValidationResponseToInvalid() {
 		String errorMessage = "Test error message";
 		ValidationResponse response = ValidationResponse.asInvalid(errorMessage);
-		assertFalse(response.isValid());
-		assertEquals(errorMessage, response.getErrorMessage());
-		assertNull(response.getJsonStructuredOutput());
+		assertFalse(response.valid());
+		assertEquals(errorMessage, response.errorMessage());
+		assertNull(response.jsonStructuredOutput());
 	}
 
 	@Test
@@ -396,13 +396,13 @@ class DefaultJsonSchemaValidatorTests {
 		ValidationResponse response1 = new ValidationResponse(true, null, "{\"valid\":true}");
 		ValidationResponse response2 = new ValidationResponse(false, "Error", null);
 
-		assertTrue(response1.isValid());
-		assertNull(response1.getErrorMessage());
-		assertEquals("{\"valid\":true}", response1.getJsonStructuredOutput());
+		assertTrue(response1.valid());
+		assertNull(response1.errorMessage());
+		assertEquals("{\"valid\":true}", response1.jsonStructuredOutput());
 
-		assertFalse(response2.isValid());
-		assertEquals("Error", response2.getErrorMessage());
-		assertNull(response2.getJsonStructuredOutput());
+		assertFalse(response2.valid());
+		assertEquals("Error", response2.errorMessage());
+		assertNull(response2.jsonStructuredOutput());
 
 		// Test equality
 		ValidationResponse response3 = new ValidationResponse(true, null, "{\"valid\":true}");

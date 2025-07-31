@@ -6,6 +6,10 @@ import io.modelcontextprotocol.server.McpNotificationHandler;
 import io.modelcontextprotocol.server.McpRequestHandler;
 import io.modelcontextprotocol.server.McpTransportContext;
 import io.modelcontextprotocol.util.Assert;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -16,7 +20,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -35,7 +38,11 @@ public class McpStreamableServerSession implements McpLoggableSession {
 
 	private final ConcurrentHashMap<Object, McpStreamableServerSessionStream> requestIdToStream = new ConcurrentHashMap<>();
 
-	private final String id;
+    /**
+     * Gets the Session ID
+     */
+    @Getter
+    private final String id;
 
 	private final Duration requestTimeout;
 
@@ -90,15 +97,7 @@ public class McpStreamableServerSession implements McpLoggableSession {
 		return loggingLevel.level() >= this.minLoggingLevel.level();
 	}
 
-	/**
-	 * Return the Session ID.
-	 * @return session ID
-	 */
-	public String getId() {
-		return this.id;
-	}
-
-	private String generateRequestId() {
+    private String generateRequestId() {
 		return this.id + "-" + this.requestCounter.getAndIncrement();
 	}
 
@@ -135,12 +134,6 @@ public class McpStreamableServerSession implements McpLoggableSession {
 		McpStreamableServerSessionStream listeningStream = new McpStreamableServerSessionStream(transport);
 		this.listeningStreamRef.set(listeningStream);
 		return listeningStream;
-	}
-
-	// TODO: keep track of history by keeping a map from eventId to stream and then
-	// iterate over the events using the lastEventId
-	public Flux<McpSchema.JSONRPCMessage> replay(Object lastEventId) {
-		return Flux.empty();
 	}
 
 	/**
@@ -227,7 +220,14 @@ public class McpStreamableServerSession implements McpLoggableSession {
 		});
 	}
 
-	record MethodNotFoundError(String method, String message, Object data) {
+	@RequiredArgsConstructor
+	@Accessors(fluent = true)
+	@Getter
+	@EqualsAndHashCode
+	static class MethodNotFoundError {
+		private final String method;
+		private final String message;
+		private final Object data;
 	}
 
 	private MethodNotFoundError getMethodNotFoundError(String method) {
@@ -283,12 +283,14 @@ public class McpStreamableServerSession implements McpLoggableSession {
 	/**
 	 * Composite holding the {@link McpStreamableServerSession} and the initialization
 	 * result
-	 *
-	 * @param session the session instance
-	 * @param initResult the result to use to respond to the client
 	 */
-	public record McpStreamableServerSessionInit(McpStreamableServerSession session,
-			Mono<McpSchema.InitializeResult> initResult) {
+	@RequiredArgsConstructor
+	@Accessors(fluent = true)
+	@Getter
+	@EqualsAndHashCode
+	public static class McpStreamableServerSessionInit {
+		private final McpStreamableServerSession session;
+		private final Mono<McpSchema.InitializeResult> initResult;
 	}
 
 	/**

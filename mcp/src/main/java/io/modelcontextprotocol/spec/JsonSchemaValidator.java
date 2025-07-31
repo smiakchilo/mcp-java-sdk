@@ -6,6 +6,7 @@ package io.modelcontextprotocol.spec;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.util.Map;
 
@@ -22,6 +23,7 @@ public interface JsonSchemaValidator {
 	 */
 
 	@RequiredArgsConstructor
+	@Accessors(fluent = true)
 	@Getter
 	@EqualsAndHashCode
 	class ValidationResponse {

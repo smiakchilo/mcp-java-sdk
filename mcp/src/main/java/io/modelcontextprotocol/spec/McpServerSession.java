@@ -27,7 +27,7 @@ import reactor.core.publisher.Sinks;
  * Represents a Model Control Protocol (MCP) session on the server side. It manages
  * bidirectional JSON-RPC communication with the client.
  */
-public class McpServerSession implements McpSession {
+public class McpServerSession implements McpLoggableSession {
 
 	private static final Logger logger = LoggerFactory.getLogger(McpServerSession.class);
 
@@ -307,8 +307,12 @@ public class McpServerSession implements McpSession {
 				this.state.lazySet(STATE_INITIALIZED);
 				// FIXME: The session ID passed here is not the same as the one in the
 				// legacy SSE transport.
-				exchangeSink.tryEmitValue(new McpAsyncServerExchange(this.id, this, clientCapabilities.get(),
-						clientInfo.get(), McpTransportContext.EMPTY));
+				exchangeSink.tryEmitValue(new McpAsyncServerExchange(
+						this.id,
+						this,
+						clientCapabilities.get(),
+						clientInfo.get(),
+						McpTransportContext.EMPTY));
 			}
 
 			var handler = notificationHandlers.get(notification.method());

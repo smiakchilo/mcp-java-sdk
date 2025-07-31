@@ -16,9 +16,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -40,6 +37,8 @@ import io.modelcontextprotocol.spec.McpServerTransportProvider;
 import io.modelcontextprotocol.util.Assert;
 import io.modelcontextprotocol.util.McpUriTemplateManagerFactory;
 import io.modelcontextprotocol.util.Utils;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -193,8 +192,10 @@ public class McpAsyncServer {
 			.rootsChangeConsumers();
 
 		if (Utils.isEmpty(rootsChangeConsumers)) {
-			rootsChangeConsumers = List.of((exchange, roots) -> Mono.fromRunnable(() -> logger
-				.warn("Roots list changed notification, but no consumers provided. Roots list changed: {}", roots)));
+			rootsChangeConsumers = List.of(
+					(exchange, roots) -> Mono.fromRunnable(() ->
+							log.warn("Roots list changed notification, but no consumers provided. Roots list changed: {}", roots))
+			);
 		}
 
 		notificationHandlers.put(McpSchema.METHOD_NOTIFICATION_ROOTS_LIST_CHANGED,
@@ -395,9 +396,9 @@ public class McpAsyncServer {
 				// Validate the result against the output schema
 				var validation = this.jsonSchemaValidator.validate(outputSchema, result.structuredContent());
 
-				if (!validation.isValid()) {
-					log.warn("Tool call result validation failed: {}", validation.getErrorMessage());
-					return new CallToolResult(validation.getErrorMessage(), true);
+				if (!validation.valid()) {
+					log.warn("Tool call result validation failed: {}", validation.errorMessage());
+					return new CallToolResult(validation.errorMessage(), true);
 				}
 
 				if (Utils.isEmpty(result.content())) {
@@ -408,7 +409,7 @@ public class McpAsyncServer {
 					// https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
 
 					return new CallToolResult(
-							List.of(new McpSchema.TextContent(validation.getJsonStructuredOutput())),
+							List.of(new McpSchema.TextContent(validation.jsonStructuredOutput())),
 							result.isError(),
 							result.structuredContent());
 				}

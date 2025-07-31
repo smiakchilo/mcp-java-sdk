@@ -1,5 +1,7 @@
 package io.modelcontextprotocol.spec;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Classic implementation of {@link McpServerTransportProviderBase} for a single outgoing
  * stream in bidirectional communication (STDIO and the legacy HTTP SSE).
