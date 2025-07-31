@@ -14,14 +14,13 @@ import io.modelcontextprotocol.spec.McpSchema.ResourceTemplate;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpStatelessServerTransport;
 import io.modelcontextprotocol.util.Assert;
-import io.modelcontextprotocol.util.DeafaultMcpUriTemplateManagerFactory;
 import io.modelcontextprotocol.util.McpUriTemplateManagerFactory;
 import io.modelcontextprotocol.util.Utils;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 /**
  * A stateless MCP server implementation for use with Streamable HTTP transport types. It
@@ -47,9 +47,17 @@ public class McpStatelessAsyncServer {
 
 	private final ObjectMapper objectMapper;
 
-	private final McpSchema.ServerCapabilities serverCapabilities;
+    /**
+     *  Get the server capabilities that define the supported features and functionality
+     */
+    @Getter
+    private final McpSchema.ServerCapabilities serverCapabilities;
 
-	private final McpSchema.Implementation serverInfo;
+    /**
+     *  Get the server implementation information
+     */
+    @Getter
+    private final McpSchema.Implementation serverInfo;
 
 	private final String instructions;
 
@@ -65,13 +73,16 @@ public class McpStatelessAsyncServer {
 
 	private List<String> protocolVersions = List.of(McpSchema.LATEST_PROTOCOL_VERSION);
 
-	private McpUriTemplateManagerFactory uriTemplateManagerFactory = new DeafaultMcpUriTemplateManagerFactory();
+	private final McpUriTemplateManagerFactory uriTemplateManagerFactory;
 
 	private final JsonSchemaValidator jsonSchemaValidator;
 
-	McpStatelessAsyncServer(McpStatelessServerTransport mcpTransport, ObjectMapper objectMapper,
-			McpStatelessServerFeatures.Async features, Duration requestTimeout,
-			McpUriTemplateManagerFactory uriTemplateManagerFactory, JsonSchemaValidator jsonSchemaValidator) {
+	McpStatelessAsyncServer(
+			McpStatelessServerTransport mcpTransport,
+			ObjectMapper objectMapper,
+			McpStatelessServerFeatures.Async features,
+			McpUriTemplateManagerFactory uriTemplateManagerFactory,
+			JsonSchemaValidator jsonSchemaValidator) {
 		this.mcpTransportProvider = mcpTransport;
 		this.objectMapper = objectMapper;
 		this.serverInfo = features.serverInfo();
@@ -156,23 +167,7 @@ public class McpStatelessAsyncServer {
 		});
 	}
 
-	/**
-	 * Get the server capabilities that define the supported features and functionality.
-	 * @return The server capabilities
-	 */
-	public McpSchema.ServerCapabilities getServerCapabilities() {
-		return this.serverCapabilities;
-	}
-
-	/**
-	 * Get the server implementation information.
-	 * @return The server implementation details
-	 */
-	public McpSchema.Implementation getServerInfo() {
-		return this.serverInfo;
-	}
-
-	/**
+    /**
 	 * Gracefully closes the server, allowing any in-progress operations to complete.
 	 * @return A Mono that completes when the server has been closed
 	 */
@@ -198,7 +193,10 @@ public class McpStatelessAsyncServer {
 			return tools;
 		}
 
-		return tools.stream().map(tool -> withStructuredOutputHandling(jsonSchemaValidator, tool)).toList();
+		return tools
+				.stream()
+				.map(tool -> withStructuredOutputHandling(jsonSchemaValidator, tool))
+				.collect(Collectors.toList());
 	}
 
 	private static McpStatelessServerFeatures.AsyncToolSpecification withStructuredOutputHandling(
@@ -354,9 +352,10 @@ public class McpStatelessAsyncServer {
 
 	private McpStatelessRequestHandler<McpSchema.ListToolsResult> toolsListRequestHandler() {
 		return (ctx, params) -> {
-			List<Tool> tools = this.tools.stream()
-				.map(McpStatelessServerFeatures.AsyncToolSpecification::tool)
-				.toList();
+			List<Tool> tools = this.tools
+					.stream()
+					.map(McpStatelessServerFeatures.AsyncToolSpecification::tool)
+					.collect(Collectors.toList());
 			return Mono.just(new McpSchema.ListToolsResult(tools, null));
 		};
 	}
@@ -364,8 +363,8 @@ public class McpStatelessAsyncServer {
 	private McpStatelessRequestHandler<CallToolResult> toolsCallRequestHandler() {
 		return (ctx, params) -> {
 			McpSchema.CallToolRequest callToolRequest = objectMapper.convertValue(params,
-					new TypeReference<McpSchema.CallToolRequest>() {
-					});
+                    new TypeReference<>() {
+                    });
 
 			Optional<McpStatelessServerFeatures.AsyncToolSpecification> toolSpecification = this.tools.stream()
 				.filter(tr -> callToolRequest.name().equals(tr.tool().name()))
@@ -433,10 +432,11 @@ public class McpStatelessAsyncServer {
 
 	private McpStatelessRequestHandler<McpSchema.ListResourcesResult> resourcesListRequestHandler() {
 		return (ctx, params) -> {
-			var resourceList = this.resources.values()
-				.stream()
-				.map(McpStatelessServerFeatures.AsyncResourceSpecification::resource)
-				.toList();
+			var resourceList = this.resources
+					.values()
+					.stream()
+					.map(McpStatelessServerFeatures.AsyncResourceSpecification::resource)
+					.collect(Collectors.toList());
 			return Mono.just(new McpSchema.ListResourcesResult(resourceList, null));
 		};
 	}
@@ -453,11 +453,15 @@ public class McpStatelessAsyncServer {
 			.filter(uri -> uri.contains("{"))
 			.map(uri -> {
 				var resource = this.resources.get(uri).resource();
-				var template = new ResourceTemplate(resource.uri(), resource.name(), resource.title(),
-						resource.description(), resource.mimeType(), resource.annotations());
-				return template;
+                return new ResourceTemplate(
+						resource.uri(),
+						resource.name(),
+						resource.title(),
+                        resource.description(),
+						resource.mimeType(),
+						resource.annotations());
 			})
-			.toList();
+			.collect(Collectors.toList());
 
 		list.addAll(resourceTemplates);
 
@@ -467,8 +471,8 @@ public class McpStatelessAsyncServer {
 	private McpStatelessRequestHandler<McpSchema.ReadResourceResult> resourcesReadRequestHandler() {
 		return (ctx, params) -> {
 			McpSchema.ReadResourceRequest resourceRequest = objectMapper.convertValue(params,
-					new TypeReference<McpSchema.ReadResourceRequest>() {
-					});
+                    new TypeReference<>() {
+                    });
 			var resourceUri = resourceRequest.uri();
 
 			McpStatelessServerFeatures.AsyncResourceSpecification specification = this.resources.values()
@@ -545,10 +549,11 @@ public class McpStatelessAsyncServer {
 			// new TypeReference<McpSchema.PaginatedRequest>() {
 			// });
 
-			var promptList = this.prompts.values()
-				.stream()
-				.map(McpStatelessServerFeatures.AsyncPromptSpecification::prompt)
-				.toList();
+			var promptList = this.prompts
+					.values()
+					.stream()
+					.map(McpStatelessServerFeatures.AsyncPromptSpecification::prompt)
+					.collect(Collectors.toList());
 
 			return Mono.just(new McpSchema.ListPromptsResult(promptList, null));
 		};
@@ -557,8 +562,8 @@ public class McpStatelessAsyncServer {
 	private McpStatelessRequestHandler<McpSchema.GetPromptResult> promptsGetRequestHandler() {
 		return (ctx, params) -> {
 			McpSchema.GetPromptRequest promptRequest = objectMapper.convertValue(params,
-					new TypeReference<McpSchema.GetPromptRequest>() {
-					});
+                    new TypeReference<>() {
+                    });
 
 			// Implement prompt retrieval logic here
 			McpStatelessServerFeatures.AsyncPromptSpecification specification = this.prompts.get(promptRequest.name());
@@ -587,7 +592,8 @@ public class McpStatelessAsyncServer {
 			String argumentName = request.argument().name();
 
 			// check if the referenced resource exists
-			if (type.equals("ref/prompt") && request.ref() instanceof McpSchema.PromptReference promptReference) {
+			if (type.equals("ref/prompt") && request.ref() instanceof McpSchema.PromptReference) {
+				McpSchema.PromptReference promptReference = (McpSchema.PromptReference) request.ref();
 				McpStatelessServerFeatures.AsyncPromptSpecification promptSpec = this.prompts
 					.get(promptReference.name());
 				if (promptSpec == null) {
@@ -599,7 +605,8 @@ public class McpStatelessAsyncServer {
 				}
 			}
 
-			if (type.equals("ref/resource") && request.ref() instanceof McpSchema.ResourceReference resourceReference) {
+			if (type.equals("ref/resource") && request.ref() instanceof McpSchema.ResourceReference) {
+				McpSchema.ResourceReference resourceReference = (McpSchema.ResourceReference) request.ref();
 				McpStatelessServerFeatures.AsyncResourceSpecification resourceSpec = this.resources
 					.get(resourceReference.uri());
 				if (resourceSpec == null) {
@@ -644,12 +651,17 @@ public class McpStatelessAsyncServer {
 
 		String refType = (String) refMap.get("type");
 
-		McpSchema.CompleteReference ref = switch (refType) {
-			case "ref/prompt" -> new McpSchema.PromptReference(refType, (String) refMap.get("name"),
+		McpSchema.CompleteReference ref;
+		if ("ref/prompt".equals(refType)) {
+			ref = new McpSchema.PromptReference(
+					refType,
+					(String) refMap.get("name"),
 					refMap.get("title") != null ? (String) refMap.get("title") : null);
-			case "ref/resource" -> new McpSchema.ResourceReference(refType, (String) refMap.get("uri"));
-			default -> throw new IllegalArgumentException("Invalid ref type: " + refType);
-		};
+		} else if ("ref/resource".equals(refType)) {
+			ref = new McpSchema.ResourceReference(refType, (String) refMap.get("uri"));
+		} else {
+			throw new IllegalArgumentException("Invalid ref type: " + refType);
+		}
 
 		String argName = (String) argMap.get("name");
 		String argValue = (String) argMap.get("value");
