@@ -76,19 +76,8 @@ class DefaultJsonSchemaValidatorTests {
 	void testDefaultConstructor() {
 		DefaultJsonSchemaValidator defaultValidator = new DefaultJsonSchemaValidator();
 
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"test": {"type": "string"}
-					}
-				}
-				""";
-		String contentJson = """
-				{
-					"test": "value"
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"test\": {\"type\": \"string\"}}}";
+		String contentJson = "{\"test\": \"value\"}";
 
 		ValidationResponse response = defaultValidator.validate(toMap(schemaJson), toMap(contentJson));
 		assertTrue(response.isValid());
@@ -99,19 +88,8 @@ class DefaultJsonSchemaValidatorTests {
 		ObjectMapper customMapper = new ObjectMapper();
 		DefaultJsonSchemaValidator customValidator = new DefaultJsonSchemaValidator(customMapper);
 
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"test": {"type": "string"}
-					}
-				}
-				""";
-		String contentJson = """
-				{
-					"test": "value"
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"test\": {\"type\": \"string\"}}}";
+		String contentJson = "{\"test\": \"value\"}";
 
 		ValidationResponse response = customValidator.validate(toMap(schemaJson), toMap(contentJson));
 		assertTrue(response.isValid());
@@ -119,23 +97,9 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithValidStringSchema() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"name": {"type": "string"},
-						"age": {"type": "integer"}
-					},
-					"required": ["name", "age"]
-				}
-				""";
-
-		String contentJson = """
-				{
-					"name": "John Doe",
-					"age": 30
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, " +
+				"\"age\": {\"type\": \"integer\"}}, \"required\": [\"name\", \"age\"]}";
+		String contentJson = "{\"name\": \"John Doe\", \"age\": 30}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -149,23 +113,9 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithValidNumberSchema() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"price": {"type": "number", "minimum": 0},
-						"quantity": {"type": "integer", "minimum": 1}
-					},
-					"required": ["price", "quantity"]
-				}
-				""";
-
-		String contentJson = """
-				{
-					"price": 19.99,
-					"quantity": 5
-				}
-				""";
+		String schemaJson ="{\"type\": \"object\", \"properties\": {\"price\": {\"type\": \"number\", \"minimum\": 0}, " +
+				"\"quantity\": {\"type\": \"integer\", \"minimum\": 1}}, \"required\": [\"price\", \"quantity\"]}";
+		String contentJson = "{\"price\": 19.99, \"quantity\": 5}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -178,24 +128,9 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithValidArraySchema() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"items": {
-							"type": "array",
-							"items": {"type": "string"}
-						}
-					},
-					"required": ["items"]
-				}
-				""";
-
-		String contentJson = """
-				{
-					"items": ["apple", "banana", "cherry"]
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"items\": {\"type\": \"array\", " +
+				"\"items\": {\"type\": \"string\"}}}, \"required\": [\"items\"]}";
+		String contentJson = "{\"items\": [\"apple\", \"banana\", \"cherry\"]}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -208,23 +143,9 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithInvalidTypeSchema() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"name": {"type": "string"},
-						"age": {"type": "integer"}
-					},
-					"required": ["name", "age"]
-				}
-				""";
-
-		String contentJson = """
-				{
-					"name": "John Doe",
-					"age": "thirty"
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, " +
+				"\"age\": {\"type\": \"integer\"}}, \"required\": [\"name\", \"age\"]}";
+		String contentJson = "{\"name\": \"John Doe\", \"age\": \"thirty\"}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -239,22 +160,9 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithMissingRequiredField() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"name": {"type": "string"},
-						"age": {"type": "integer"}
-					},
-					"required": ["name", "age"]
-				}
-				""";
-
-		String contentJson = """
-				{
-					"name": "John Doe"
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}, " +
+				"\"age\": {\"type\": \"integer\"}}, \"required\": [\"name\", \"age\"]}";
+		String contentJson = "{\"name\": \"John Doe\"}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -268,22 +176,8 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithAdditionalPropertiesNotAllowed() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"name": {"type": "string"}
-					},
-					"required": ["name"]
-				}
-				""";
-
-		String contentJson = """
-				{
-					"name": "John Doe",
-					"extraField": "should not be allowed"
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}, \"required\": [\"name\"]}";
+		String contentJson = "{\"name\": \"John Doe\", \"extraField\": \"should not be allowed\"}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -297,23 +191,9 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithAdditionalPropertiesExplicitlyAllowed() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"name": {"type": "string"}
-					},
-					"required": ["name"],
-					"additionalProperties": true
-				}
-				""";
-
-		String contentJson = """
-				{
-					"name": "John Doe",
-					"extraField": "should be allowed"
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}, " +
+				"\"required\": [\"name\"], \"additionalProperties\": true}";
+		String contentJson = "{\"name\": \"John Doe\", \"extraField\": \"should be allowed\"}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -326,23 +206,9 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithAdditionalPropertiesExplicitlyDisallowed() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"name": {"type": "string"}
-					},
-					"required": ["name"],
-					"additionalProperties": false
-				}
-				""";
-
-		String contentJson = """
-				{
-					"name": "John Doe",
-					"extraField": "should not be allowed"
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}, " +
+				"\"required\": [\"name\"], \"additionalProperties\": false}";
+		String contentJson = "{\"name\": \"John Doe\", \"extraField\": \"should not be allowed\"}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -356,17 +222,8 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithEmptySchema() {
-		String schemaJson = """
-				{
-					"additionalProperties": true
-				}
-				""";
-
-		String contentJson = """
-				{
-					"anything": "goes"
-				}
-				""";
+		String schemaJson = "{\"additionalProperties\": true}";
+		String contentJson = "{\"anything\": \"goes\"}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -379,16 +236,8 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithEmptyContent() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {}
-				}
-				""";
-
-		String contentJson = """
-				{}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {}}";
+		String contentJson = "{}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -401,41 +250,11 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithNestedObjectSchema() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"person": {
-							"type": "object",
-							"properties": {
-								"name": {"type": "string"},
-								"address": {
-									"type": "object",
-									"properties": {
-										"street": {"type": "string"},
-										"city": {"type": "string"}
-									},
-									"required": ["street", "city"]
-								}
-							},
-							"required": ["name", "address"]
-						}
-					},
-					"required": ["person"]
-				}
-				""";
-
-		String contentJson = """
-				{
-					"person": {
-						"name": "John Doe",
-						"address": {
-							"street": "123 Main St",
-							"city": "Anytown"
-						}
-					}
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"person\": {\"type\": \"object\", \"properties\": " +
+				"{\"name\": {\"type\": \"string\"}, \"address\": {\"type\": \"object\", \"properties\": {\"street\": " +
+				"{\"type\": \"string\"}, \"city\": {\"type\": \"string\"}}, \"required\": [\"street\", \"city\"]}}, " +
+				"\"required\": [\"name\", \"address\"]}}, \"required\": [\"person\"]}";
+		String contentJson = "{\"person\": {\"name\": \"John Doe\", \"address\": {\"street\": \"123 Main St\", \"city\": \"Anytown\"}}}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -448,40 +267,11 @@ class DefaultJsonSchemaValidatorTests {
 
 	@Test
 	void testValidateWithInvalidNestedObjectSchema() {
-		String schemaJson = """
-				{
-					"type": "object",
-					"properties": {
-						"person": {
-							"type": "object",
-							"properties": {
-								"name": {"type": "string"},
-								"address": {
-									"type": "object",
-									"properties": {
-										"street": {"type": "string"},
-										"city": {"type": "string"}
-									},
-									"required": ["street", "city"]
-								}
-							},
-							"required": ["name", "address"]
-						}
-					},
-					"required": ["person"]
-				}
-				""";
-
-		String contentJson = """
-				{
-					"person": {
-						"name": "John Doe",
-						"address": {
-							"street": "123 Main St"
-						}
-					}
-				}
-				""";
+		String schemaJson = "{\"type\": \"object\", \"properties\": {\"person\": {\"type\": \"object\", \"properties\": " +
+				"{\"name\": {\"type\": \"string\"}, \"address\": {\"type\": \"object\", \"properties\": {\"street\": " +
+				"{\"type\": \"string\"}, \"city\": {\"type\": \"string\"}}, \"required\": [\"street\", \"city\"]}}, " +
+				"\"required\": [\"name\", \"address\"]}}, \"required\": [\"person\"]}";
+		String contentJson = "{\"person\": {\"name\": \"John Doe\", \"address\": {\"street\": \"123 Main St\"}}}";
 
 		Map<String, Object> schema = toMap(schemaJson);
 		Map<String, Object> structuredContent = toMap(contentJson);
@@ -544,127 +334,43 @@ class DefaultJsonSchemaValidatorTests {
 	private static Stream<Arguments> provideValidSchemaAndContentPairs() {
 		return Stream.of(
 				// Boolean schema
-				Arguments.of(staticToMap("""
-						{
-							"type": "object",
-							"properties": {
-								"flag": {"type": "boolean"}
-							}
-						}
-						"""), staticToMap("""
-						{
-							"flag": true
-						}
-						""")),
+				Arguments.of(
+						staticToMap("{\"type\": \"object\", \"properties\": {\"flag\": {\"type\": \"boolean\"}}}"),
+						staticToMap("{\"flag\": true}")
+				),
 				// String with additional properties allowed
-				Arguments.of(staticToMap("""
-						{
-							"type": "object",
-							"properties": {
-								"name": {"type": "string"}
-							},
-							"additionalProperties": true
-						}
-						"""), staticToMap("""
-						{
-							"name": "test",
-							"extra": "allowed"
-						}
-						""")),
+				Arguments.of(
+						staticToMap("{\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\"}}, \"additionalProperties\": true}"),
+						staticToMap("{\"name\": \"test\", \"extra\": \"allowed\"}")),
 				// Array with specific items
-				Arguments.of(staticToMap("""
-						{
-							"type": "object",
-							"properties": {
-								"numbers": {
-									"type": "array",
-									"items": {"type": "number"}
-								}
-							}
-						}
-						"""), staticToMap("""
-						{
-							"numbers": [1.0, 2.5, 3.14]
-						}
-						""")),
+				Arguments.of(
+						staticToMap("{\"type\": \"object\", \"properties\": {\"numbers\": {\"type\": \"array\", \"items\": {\"type\": \"number\"}}}}"),
+						staticToMap("{\"numbers\": [1.0, 2.5, 3.14]}")
+				),
 				// Enum validation
-				Arguments.of(staticToMap("""
-						{
-							"type": "object",
-							"properties": {
-								"status": {
-									"type": "string",
-									"enum": ["active", "inactive", "pending"]
-								}
-							}
-						}
-						"""), staticToMap("""
-						{
-							"status": "active"
-						}
-						""")));
+				Arguments.of(
+						staticToMap("{\"type\": \"object\", \"properties\": {\"status\": {\"type\": \"string\", \"enum\": [\"active\", \"inactive\", \"pending\"]}}}"),
+						staticToMap("{\"status\": \"active\"}")));
 	}
 
 	private static Stream<Arguments> provideInvalidSchemaAndContentPairs() {
 		return Stream.of(
 				// Wrong boolean type
-				Arguments.of(staticToMap("""
-						{
-							"type": "object",
-							"properties": {
-								"flag": {"type": "boolean"}
-							}
-						}
-						"""), staticToMap("""
-						{
-							"flag": "true"
-						}
-						""")),
+				Arguments.of(
+						staticToMap("{\"type\": \"object\", \"properties\": {\"flag\": {\"type\": \"boolean\"}}}"),
+						staticToMap("{\"flag\": \"true\"}")),
 				// Array with wrong item types
-				Arguments.of(staticToMap("""
-						{
-							"type": "object",
-							"properties": {
-								"numbers": {
-									"type": "array",
-									"items": {"type": "number"}
-								}
-							}
-						}
-						"""), staticToMap("""
-						{
-							"numbers": ["one", "two", "three"]
-						}
-						""")),
+				Arguments.of(
+						staticToMap("{\"type\": \"object\", \"properties\": {\"numbers\": {\"type\": \"array\", \"items\": {\"type\": \"number\"}}}}"),
+						staticToMap("{\"numbers\": [\"one\", \"two\", \"three\"]}")),
 				// Invalid enum value
-				Arguments.of(staticToMap("""
-						{
-							"type": "object",
-							"properties": {
-								"status": {
-									"type": "string",
-									"enum": ["active", "inactive", "pending"]
-								}
-							}
-						}
-						"""), staticToMap("""
-						{
-							"status": "unknown"
-						}
-						""")),
+				Arguments.of(
+						staticToMap("{\"type\": \"object\", \"properties\": {\"status\": {\"type\": \"string\", \"enum\": [\"active\", \"inactive\", \"pending\"]}}}"),
+						staticToMap("{\"status\": \"unknown\"}")),
 				// Minimum constraint violation
-				Arguments.of(staticToMap("""
-						{
-							"type": "object",
-							"properties": {
-								"age": {"type": "integer", "minimum": 0}
-							}
-						}
-						"""), staticToMap("""
-						{
-							"age": -5
-						}
-						""")));
+				Arguments.of(
+						staticToMap("{\"type\": \"object\", \"properties\": {\"age\": {\"type\": \"integer\", \"minimum\": 0}}}"),
+						staticToMap("{\"age\": -5}")));
 	}
 
 	@Test

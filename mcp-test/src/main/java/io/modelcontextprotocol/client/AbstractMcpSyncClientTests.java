@@ -22,13 +22,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -58,9 +57,8 @@ import reactor.test.StepVerifier;
  * @author Christian Tzolov
  * @author Dariusz Jędrzejczyk
  */
+@Slf4j
 public abstract class AbstractMcpSyncClientTests {
-
-	private static final Logger logger = LoggerFactory.getLogger(AbstractMcpSyncClientTests.class);
 
 	private static final String TEST_MESSAGE = "Hello MCP Spring AI!";
 
@@ -463,35 +461,32 @@ public abstract class AbstractMcpSyncClientTests {
 
 					// Validate content based on its type with more comprehensive
 					// checks
-					switch (content.mimeType()) {
-						case "text/plain" -> {
-							TextResourceContents textContent = assertInstanceOf(TextResourceContents.class, content);
-							assertThat(textContent.text()).isNotNull().isNotEmpty();
-							// Verify URI consistency
-							assertThat(textContent.uri()).isEqualTo(resource.uri());
-						}
-						case "application/octet-stream" -> {
-							BlobResourceContents blobContent = assertInstanceOf(BlobResourceContents.class, content);
-							assertThat(blobContent.blob()).isNotNull().isNotEmpty();
-							// Verify URI consistency
-							assertThat(blobContent.uri()).isEqualTo(resource.uri());
-							// Validate base64 encoding format
-							assertThat(blobContent.blob()).matches("^[A-Za-z0-9+/]*={0,2}$");
-						}
-						default -> {
-							// More flexible handling of additional MIME types
-							// Log the unexpected type for debugging but don't fail
-							// the test
-							logger.warn("Warning: Encountered unexpected MIME type: {} for resource: {}",
-									content.mimeType(), resource.uri());
+					if ("text/plain".equals(content.mimeType())) {
+						TextResourceContents textContent = assertInstanceOf(TextResourceContents.class, content);
+						assertThat(textContent.text()).isNotNull().isNotEmpty();
+						// Verify URI consistency
+						assertThat(textContent.uri()).isEqualTo(resource.uri());
+					} else if ("application/octet-stream".equals(content.mimeType())) {
+						BlobResourceContents blobContent = assertInstanceOf(BlobResourceContents.class, content);
+						assertThat(blobContent.blob()).isNotNull().isNotEmpty();
+						// Verify URI consistency
+						assertThat(blobContent.uri()).isEqualTo(resource.uri());
+						// Validate base64 encoding format
+						assertThat(blobContent.blob()).matches("^[A-Za-z0-9+/]*={0,2}$");
+					} else {
+						// More flexible handling of additional MIME types
+						// Log the unexpected type for debugging but don't fail
+						// the test
+						log.warn("Warning: Encountered unexpected MIME type: {} for resource: {}",
+								content.mimeType(), resource.uri());
 
-							// Still validate basic properties
-							if (content instanceof TextResourceContents textContent) {
-								assertThat(textContent.text()).isNotNull();
-							}
-							else if (content instanceof BlobResourceContents blobContent) {
-								assertThat(blobContent.blob()).isNotNull();
-							}
+						// Still validate basic properties
+						if (content instanceof TextResourceContents) {
+							TextResourceContents textContent = (TextResourceContents) content;
+							assertThat(textContent.text()).isNotNull();
+						} else if (content instanceof BlobResourceContents) {
+							BlobResourceContents blobContent = (BlobResourceContents) content;
+							assertThat(blobContent.blob()).isNotNull();
 						}
 					}
 				}
@@ -638,9 +633,10 @@ public abstract class AbstractMcpSyncClientTests {
 				// Verify tool response to ensure our sampling response was passed through
 				assertThat(result.content()).hasAtLeastOneElementOfType(McpSchema.TextContent.class);
 				assertThat(result.content()).allSatisfy(content -> {
-					if (!(content instanceof McpSchema.TextContent text))
+					if (!(content instanceof McpSchema.TextContent)) {
 						return;
-
+					}
+					McpSchema.TextContent text = (McpSchema.TextContent) content;
 					assertThat(text.text()).endsWith(response); // Prefixed
 				});
 
@@ -683,9 +679,8 @@ public abstract class AbstractMcpSyncClientTests {
 			try {
 				// Wait for progress notifications to be processed
 				latch.await(3, TimeUnit.SECONDS);
-			}
-			catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (InterruptedException e) {
+				log.error("Interrupted while waiting for progress notifications", e);
 			}
 
 			assertThat(progressNotificationCount.get()).isEqualTo(2);

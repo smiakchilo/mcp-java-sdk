@@ -25,21 +25,20 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 @SuppressWarnings("deprecation")
 class SyncToolSpecificationBuilderTest {
 
-	String emptyJsonSchema = """
-			{
-				"type": "object"
-			}
-			""";
+	private static final String EMPTY_JSON_SCHEMA = "{\"type\": \"object\"}";
 
 	@Test
 	void builderShouldCreateValidSyncToolSpecification() {
 
-		Tool tool = new Tool("test-tool", "A test tool", emptyJsonSchema);
+		Tool tool = new Tool("test-tool", "A test tool", EMPTY_JSON_SCHEMA);
 
-		McpServerFeatures.SyncToolSpecification specification = McpServerFeatures.SyncToolSpecification.builder()
-			.tool(tool)
-			.callHandler((exchange, request) -> new CallToolResult(List.of(new TextContent("Test result")), false))
-			.build();
+		McpServerFeatures.SyncToolSpecification specification = McpServerFeatures.SyncToolSpecification
+				.builder()
+				.tool(tool)
+				.callHandler(
+						(exchange, request) -> new CallToolResult(List.of(new TextContent("Test result")),
+								false))
+				.build();
 
 		assertThat(specification).isNotNull();
 		assertThat(specification.tool()).isEqualTo(tool);
@@ -56,7 +55,7 @@ class SyncToolSpecificationBuilderTest {
 
 	@Test
 	void builderShouldThrowExceptionWhenCallToolIsNull() {
-		Tool tool = new Tool("test-tool", "A test tool", emptyJsonSchema);
+		Tool tool = new Tool("test-tool", "A test tool", EMPTY_JSON_SCHEMA);
 
 		assertThatThrownBy(() -> McpServerFeatures.SyncToolSpecification.builder().tool(tool).build())
 			.isInstanceOf(IllegalArgumentException.class)
@@ -65,7 +64,7 @@ class SyncToolSpecificationBuilderTest {
 
 	@Test
 	void builderShouldAllowMethodChaining() {
-		Tool tool = new Tool("test-tool", "A test tool", emptyJsonSchema);
+		Tool tool = new Tool("test-tool", "A test tool", EMPTY_JSON_SCHEMA);
 		McpServerFeatures.SyncToolSpecification.Builder builder = McpServerFeatures.SyncToolSpecification.builder();
 
 		// Then - verify method chaining returns the same builder instance
@@ -75,7 +74,7 @@ class SyncToolSpecificationBuilderTest {
 
 	@Test
 	void builtSpecificationShouldExecuteCallToolCorrectly() {
-		Tool tool = new Tool("calculator", "Simple calculator", emptyJsonSchema);
+		Tool tool = new Tool("calculator", "Simple calculator", EMPTY_JSON_SCHEMA);
 		String expectedResult = "42";
 
 		McpServerFeatures.SyncToolSpecification specification = McpServerFeatures.SyncToolSpecification.builder()

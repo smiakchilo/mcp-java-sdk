@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,6 +60,7 @@ import reactor.test.StepVerifier;
  * @author Dariusz Jędrzejczyk
  */
 // KEEP IN SYNC with the class in mcp-test module
+@Slf4j
 public abstract class AbstractMcpSyncClientTests {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractMcpSyncClientTests.class);
@@ -128,7 +130,7 @@ public abstract class AbstractMcpSyncClientTests {
 
 	static final Object DUMMY_RETURN_VALUE = new Object();
 
-	<T> void verifyNotificationSucceedsWithImplicitInitialization(Consumer<McpSyncClient> operation, String action) {
+	void verifyNotificationSucceedsWithImplicitInitialization(Consumer<McpSyncClient> operation, String action) {
 		verifyCallSucceedsWithImplicitInitialization(client -> {
 			operation.accept(client);
 			return DUMMY_RETURN_VALUE;
@@ -136,21 +138,25 @@ public abstract class AbstractMcpSyncClientTests {
 	}
 
 	<T> void verifyCallSucceedsWithImplicitInitialization(Function<McpSyncClient, T> blockingOperation, String action) {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			StepVerifier.create(Mono.fromSupplier(() -> blockingOperation.apply(mcpSyncClient))
-				// Offload the blocking call to the real scheduler
-				.subscribeOn(Schedulers.boundedElastic())).expectNextCount(1).verifyComplete();
-		});
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> StepVerifier
+						.create(Mono.fromSupplier(() -> blockingOperation.apply(mcpSyncClient))
+								// Offload the blocking call to the real scheduler
+								.subscribeOn(Schedulers.boundedElastic())).expectNextCount(1).verifyComplete());
 	}
 
 	@Test
 	void testConstructorWithInvalidArguments() {
-		assertThatThrownBy(() -> McpClient.sync(null).build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Transport must not be null");
+		assertThatThrownBy(() -> McpClient
+				.sync(null).build())
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Transport must not be null");
 
-		assertThatThrownBy(() -> McpClient.sync(createMcpTransport()).requestTimeout(null).build())
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Request timeout must not be null");
+		assertThatThrownBy(() -> McpClient
+				.sync(createMcpTransport()).requestTimeout(null).build())
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Request timeout must not be null");
 	}
 
 	@Test
@@ -217,14 +223,14 @@ public abstract class AbstractMcpSyncClientTests {
 
 	@Test
 	void testPingWithoutInitialization() {
-		verifyCallSucceedsWithImplicitInitialization(client -> client.ping(), "pinging the server");
+		verifyCallSucceedsWithImplicitInitialization(McpSyncClient::ping, "pinging the server");
 	}
 
 	@Test
 	void testPing() {
 		withClient(createMcpTransport(), mcpSyncClient -> {
 			mcpSyncClient.initialize();
-			assertThatCode(() -> mcpSyncClient.ping()).doesNotThrowAnyException();
+			assertThatCode(mcpSyncClient::ping).doesNotThrowAnyException();
 		});
 	}
 
@@ -314,7 +320,8 @@ public abstract class AbstractMcpSyncClientTests {
 
 	@Test
 	void testRootsListChangedWithoutInitialization() {
-		verifyNotificationSucceedsWithImplicitInitialization(client -> client.rootsListChangedNotification(),
+		verifyNotificationSucceedsWithImplicitInitialization(
+                McpSyncClient::rootsListChangedNotification,
 				"sending roots list changed notification");
 	}
 
@@ -322,7 +329,7 @@ public abstract class AbstractMcpSyncClientTests {
 	void testRootsListChanged() {
 		withClient(createMcpTransport(), mcpSyncClient -> {
 			mcpSyncClient.initialize();
-			assertThatCode(() -> mcpSyncClient.rootsListChangedNotification()).doesNotThrowAnyException();
+			assertThatCode(mcpSyncClient::rootsListChangedNotification).doesNotThrowAnyException();
 		});
 	}
 
@@ -352,202 +359,222 @@ public abstract class AbstractMcpSyncClientTests {
 
 	@Test
 	void testListAllResources() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			mcpSyncClient.initialize();
-			ListResourcesResult resources = mcpSyncClient.listResources();
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
+					mcpSyncClient.initialize();
+					ListResourcesResult resources = mcpSyncClient.listResources();
 
-			assertThat(resources).isNotNull().satisfies(result -> {
-				assertThat(result.resources()).isNotNull();
+					assertThat(resources)
+							.isNotNull()
+							.satisfies(result -> {
+								assertThat(result.resources()).isNotNull();
 
-				if (!result.resources().isEmpty()) {
-					Resource firstResource = result.resources().get(0);
-					assertThat(firstResource.uri()).isNotNull();
-					assertThat(firstResource.name()).isNotNull();
-				}
-			});
-		});
+								if (!result.resources().isEmpty()) {
+									Resource firstResource = result.resources().get(0);
+									assertThat(firstResource.uri()).isNotNull();
+									assertThat(firstResource.name()).isNotNull();
+								}
+							});
+				});
 	}
 
 	@Test
 	void testClientSessionState() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			assertThat(mcpSyncClient).isNotNull();
-		});
+		withClient(createMcpTransport(), mcpSyncClient -> assertThat(mcpSyncClient).isNotNull());
 	}
 
 	@Test
 	void testInitializeWithRootsListProviders() {
-		withClient(createMcpTransport(), builder -> builder.roots(new Root("file:///test/path", "test-root")),
-				mcpSyncClient -> {
+		withClient(
+				createMcpTransport(),
+				builder -> builder.roots(new Root("file:///test/path", "test-root")),
+				mcpSyncClient -> assertThatCode(() -> {
+                    mcpSyncClient.initialize();
+                    mcpSyncClient.close();
+                }).doesNotThrowAnyException());
+	}
 
+	@Test
+	void testAddRoot() {
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
+					Root newRoot = new Root("file:///new/test/path", "new-test-root");
+					assertThatCode(() -> mcpSyncClient.addRoot(newRoot)).doesNotThrowAnyException();
+				});
+	}
+
+	@Test
+	void testAddRootWithNullValue() {
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> assertThatThrownBy(() -> mcpSyncClient.addRoot(null))
+						.hasMessageContaining("Root must not be null"));
+	}
+
+	@Test
+	void testRemoveRoot() {
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
+					Root root = new Root("file:///test/path/to/remove", "root-to-remove");
 					assertThatCode(() -> {
-						mcpSyncClient.initialize();
-						mcpSyncClient.close();
+						mcpSyncClient.addRoot(root);
+						mcpSyncClient.removeRoot(root.uri());
 					}).doesNotThrowAnyException();
 				});
 	}
 
 	@Test
-	void testAddRoot() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			Root newRoot = new Root("file:///new/test/path", "new-test-root");
-			assertThatCode(() -> mcpSyncClient.addRoot(newRoot)).doesNotThrowAnyException();
-		});
-	}
-
-	@Test
-	void testAddRootWithNullValue() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			assertThatThrownBy(() -> mcpSyncClient.addRoot(null)).hasMessageContaining("Root must not be null");
-		});
-	}
-
-	@Test
-	void testRemoveRoot() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			Root root = new Root("file:///test/path/to/remove", "root-to-remove");
-			assertThatCode(() -> {
-				mcpSyncClient.addRoot(root);
-				mcpSyncClient.removeRoot(root.uri());
-			}).doesNotThrowAnyException();
-		});
-	}
-
-	@Test
 	void testRemoveNonExistentRoot() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			assertThatThrownBy(() -> mcpSyncClient.removeRoot("nonexistent-uri"))
-				.hasMessageContaining("Root with uri 'nonexistent-uri' not found");
-		});
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> assertThatThrownBy(() -> mcpSyncClient.removeRoot("nonexistent-uri"))
+						.hasMessageContaining("Root with uri 'nonexistent-uri' not found"));
 	}
 
 	@Test
 	void testReadResourceWithoutInitialization() {
 		AtomicReference<List<Resource>> resources = new AtomicReference<>();
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			mcpSyncClient.initialize();
-			resources.set(mcpSyncClient.listResources().resources());
-		});
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
+					mcpSyncClient.initialize();
+					resources.set(mcpSyncClient.listResources().resources());
+				});
 
-		verifyCallSucceedsWithImplicitInitialization(client -> client.readResource(resources.get().get(0)),
+		verifyCallSucceedsWithImplicitInitialization(
+				client -> client.readResource(resources.get().get(0)),
 				"reading resources");
 	}
 
 	@Test
 	void testReadResource() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
 
-			int readResourceCount = 0;
+					int readResourceCount = 0;
 
-			mcpSyncClient.initialize();
-			ListResourcesResult resources = mcpSyncClient.listResources(null);
+					mcpSyncClient.initialize();
+					ListResourcesResult resources = mcpSyncClient.listResources(null);
 
-			assertThat(resources).isNotNull();
-			assertThat(resources.resources()).isNotNull();
+					assertThat(resources).isNotNull();
+					assertThat(resources.resources()).isNotNull();
 
-			assertThat(resources.resources()).isNotNull().isNotEmpty();
+					assertThat(resources.resources()).isNotNull().isNotEmpty();
 
-			// Test reading each resource individually for better error isolation
-			for (Resource resource : resources.resources()) {
-				ReadResourceResult result = mcpSyncClient.readResource(resource);
+					// Test reading each resource individually for better error isolation
+					for (Resource resource : resources.resources()) {
+						ReadResourceResult result = mcpSyncClient.readResource(resource);
 
-				assertThat(result).isNotNull();
-				assertThat(result.contents()).isNotNull().isNotEmpty();
+						assertThat(result).isNotNull();
+						assertThat(result.contents()).isNotNull().isNotEmpty();
 
-				readResourceCount++;
+						readResourceCount++;
 
-				// Validate each content item
-				for (ResourceContents content : result.contents()) {
-					assertThat(content).isNotNull();
-					assertThat(content.uri()).isNotNull().isNotEmpty();
-					assertThat(content.mimeType()).isNotNull().isNotEmpty();
+						// Validate each content item
+						for (ResourceContents content : result.contents()) {
+							assertThat(content).isNotNull();
+							assertThat(content.uri()).isNotNull().isNotEmpty();
+							assertThat(content.mimeType()).isNotNull().isNotEmpty();
 
-					// Validate content based on its type with more comprehensive
-					// checks
-					switch (content.mimeType()) {
-						case "text/plain" -> {
-							TextResourceContents textContent = assertInstanceOf(TextResourceContents.class, content);
-							assertThat(textContent.text()).isNotNull().isNotEmpty();
-							// Verify URI consistency
-							assertThat(textContent.uri()).isEqualTo(resource.uri());
-						}
-						case "application/octet-stream" -> {
-							BlobResourceContents blobContent = assertInstanceOf(BlobResourceContents.class, content);
-							assertThat(blobContent.blob()).isNotNull().isNotEmpty();
-							// Verify URI consistency
-							assertThat(blobContent.uri()).isEqualTo(resource.uri());
-							// Validate base64 encoding format
-							assertThat(blobContent.blob()).matches("^[A-Za-z0-9+/]*={0,2}$");
-						}
-						default -> {
-							// More flexible handling of additional MIME types
-							// Log the unexpected type for debugging but don't fail
-							// the test
-							logger.warn("Warning: Encountered unexpected MIME type: {} for resource: {}",
-									content.mimeType(), resource.uri());
+							// Validate content based on its type with more comprehensive
+							// checks
+							String mimeType = content.mimeType();
+							if ("text/plain".equals(mimeType)) {
+								TextResourceContents textContent = assertInstanceOf(
+										TextResourceContents.class,
+										content);
+								assertThat(textContent.text()).isNotNull().isNotEmpty();
+								// Verify URI consistency
+								assertThat(textContent.uri()).isEqualTo(resource.uri());
+							} else if ("application/octet-stream".equals(mimeType)) {
+								BlobResourceContents blobContent = assertInstanceOf(
+										BlobResourceContents.class,
+										content);
+								assertThat(blobContent.blob()).isNotNull().isNotEmpty();
+								// Verify URI consistency
+								assertThat(blobContent.uri()).isEqualTo(resource.uri());
+								// Validate base64 encoding format
+								assertThat(blobContent.blob()).matches("^[A-Za-z0-9+/]*={0,2}$");
+							} else {
+								// More flexible handling of additional MIME types
+								// Log the unexpected type for debugging but don't fail
+								// the test
+								logger.warn("Warning: Encountered unexpected MIME type: {} for resource: {}",
+										content.mimeType(), resource.uri());
 
-							// Still validate basic properties
-							if (content instanceof TextResourceContents textContent) {
-								assertThat(textContent.text()).isNotNull();
-							}
-							else if (content instanceof BlobResourceContents blobContent) {
-								assertThat(blobContent.blob()).isNotNull();
+								// Still validate basic properties
+								if (content instanceof TextResourceContents) {
+									TextResourceContents textContent = (TextResourceContents) content;
+									assertThat(textContent.text()).isNotNull();
+								} else if (content instanceof BlobResourceContents) {
+									BlobResourceContents blobContent = (BlobResourceContents) content;
+									assertThat(blobContent.blob()).isNotNull();
+								}
 							}
 						}
 					}
-				}
-			}
 
-			// Assert that we read exactly 10 resources
-			assertThat(readResourceCount).isEqualTo(10);
-		});
+					// Assert that we read exactly 10 resources
+					assertThat(readResourceCount).isEqualTo(10);
+				});
 	}
 
 	@Test
 	void testListResourceTemplatesWithoutInitialization() {
-		verifyCallSucceedsWithImplicitInitialization(client -> client.listResourceTemplates(McpSchema.FIRST_PAGE),
+		verifyCallSucceedsWithImplicitInitialization(
+				client -> client.listResourceTemplates(McpSchema.FIRST_PAGE),
 				"listing resource templates");
 	}
 
 	@Test
 	void testListResourceTemplates() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			mcpSyncClient.initialize();
-			ListResourceTemplatesResult result = mcpSyncClient.listResourceTemplates(McpSchema.FIRST_PAGE);
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
+					mcpSyncClient.initialize();
+					ListResourceTemplatesResult result = mcpSyncClient.listResourceTemplates(McpSchema.FIRST_PAGE);
 
-			assertThat(result).isNotNull();
-			assertThat(result.resourceTemplates()).isNotNull();
-		});
+					assertThat(result).isNotNull();
+					assertThat(result.resourceTemplates()).isNotNull();
+				});
 	}
 
 	@Test
 	void testListAllResourceTemplates() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			mcpSyncClient.initialize();
-			ListResourceTemplatesResult result = mcpSyncClient.listResourceTemplates();
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
+					mcpSyncClient.initialize();
+					ListResourceTemplatesResult result = mcpSyncClient.listResourceTemplates();
 
-			assertThat(result).isNotNull();
-			assertThat(result.resourceTemplates()).isNotNull();
-		});
+					assertThat(result).isNotNull();
+					assertThat(result.resourceTemplates()).isNotNull();
+				});
 	}
 
 	// @Test
 	void testResourceSubscription() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			ListResourcesResult resources = mcpSyncClient.listResources(null);
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
+					ListResourcesResult resources = mcpSyncClient.listResources(null);
 
-			if (!resources.resources().isEmpty()) {
-				Resource firstResource = resources.resources().get(0);
+					if (!resources.resources().isEmpty()) {
+						Resource firstResource = resources.resources().get(0);
 
-				// Test subscribe
-				assertThatCode(() -> mcpSyncClient.subscribeResource(new SubscribeRequest(firstResource.uri())))
-					.doesNotThrowAnyException();
+						// Test subscribe
+						assertThatCode(() -> mcpSyncClient.subscribeResource(new SubscribeRequest(firstResource.uri())))
+								.doesNotThrowAnyException();
 
-				// Test unsubscribe
-				assertThatCode(() -> mcpSyncClient.unsubscribeResource(new UnsubscribeRequest(firstResource.uri())))
-					.doesNotThrowAnyException();
-			}
-		});
+						// Test unsubscribe
+						assertThatCode(() -> mcpSyncClient.unsubscribeResource(new UnsubscribeRequest(firstResource.uri())))
+								.doesNotThrowAnyException();
+					}
+				});
 	}
 
 	@Test
@@ -556,17 +583,16 @@ public abstract class AbstractMcpSyncClientTests {
 		AtomicBoolean resourcesNotificationReceived = new AtomicBoolean(false);
 		AtomicBoolean promptsNotificationReceived = new AtomicBoolean(false);
 
-		withClient(createMcpTransport(),
-				builder -> builder.toolsChangeConsumer(tools -> toolsNotificationReceived.set(true))
-					.resourcesChangeConsumer(resources -> resourcesNotificationReceived.set(true))
-					.promptsChangeConsumer(prompts -> promptsNotificationReceived.set(true)),
-				client -> {
-
-					assertThatCode(() -> {
-						client.initialize();
-						client.close();
-					}).doesNotThrowAnyException();
-				});
+		withClient(
+				createMcpTransport(),
+				builder -> builder
+						.toolsChangeConsumer(tools -> toolsNotificationReceived.set(true))
+						.resourcesChangeConsumer(resources -> resourcesNotificationReceived.set(true))
+						.promptsChangeConsumer(prompts -> promptsNotificationReceived.set(true)),
+				client -> assertThatCode(() -> {
+					client.initialize();
+					client.close();
+				}).doesNotThrowAnyException());
 	}
 
 	// ---------------------------------------
@@ -581,31 +607,37 @@ public abstract class AbstractMcpSyncClientTests {
 
 	@Test
 	void testLoggingLevels() {
-		withClient(createMcpTransport(), mcpSyncClient -> {
-			mcpSyncClient.initialize();
-			// Test all logging levels
-			for (McpSchema.LoggingLevel level : McpSchema.LoggingLevel.values()) {
-				assertThatCode(() -> mcpSyncClient.setLoggingLevel(level)).doesNotThrowAnyException();
-			}
-		});
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> {
+					mcpSyncClient.initialize();
+					// Test all logging levels
+					for (McpSchema.LoggingLevel level : McpSchema.LoggingLevel.values()) {
+						assertThatCode(() -> mcpSyncClient.setLoggingLevel(level)).doesNotThrowAnyException();
+					}
+				});
 	}
 
 	@Test
 	void testLoggingConsumer() {
 		AtomicBoolean logReceived = new AtomicBoolean(false);
-		withClient(createMcpTransport(), builder -> builder.requestTimeout(getRequestTimeout())
-			.loggingConsumer(notification -> logReceived.set(true)), client -> {
-				assertThatCode(() -> {
+		withClient(
+				createMcpTransport(),
+				builder -> builder.requestTimeout(getRequestTimeout())
+						.loggingConsumer(
+								notification -> logReceived.set(true)),
+				client -> assertThatCode(() -> {
 					client.initialize();
 					client.close();
-				}).doesNotThrowAnyException();
-			});
+				}).doesNotThrowAnyException());
 	}
 
 	@Test
 	void testLoggingWithNullNotification() {
-		withClient(createMcpTransport(), mcpSyncClient -> assertThatThrownBy(() -> mcpSyncClient.setLoggingLevel(null))
-			.hasMessageContaining("Logging level must not be null"));
+		withClient(
+				createMcpTransport(),
+				mcpSyncClient -> assertThatThrownBy(() -> mcpSyncClient.setLoggingLevel(null))
+						.hasMessageContaining("Logging level must not be null"));
 	}
 
 	@Test
@@ -620,36 +652,42 @@ public abstract class AbstractMcpSyncClientTests {
 		AtomicReference<String> receivedMessage = new AtomicReference<>();
 		AtomicInteger receivedMaxTokens = new AtomicInteger();
 
-		withClient(transport, spec -> spec.capabilities(McpSchema.ClientCapabilities.builder().sampling().build())
-			.sampling(request -> {
-				McpSchema.TextContent messageText = assertInstanceOf(McpSchema.TextContent.class,
-						request.messages().get(0).content());
-				receivedPrompt.set(request.systemPrompt());
-				receivedMessage.set(messageText.text());
-				receivedMaxTokens.set(request.maxTokens());
+		withClient(
+				transport,
+				spec -> spec
+						.capabilities(McpSchema.ClientCapabilities.builder().sampling().build())
+						.sampling(request -> {
+							McpSchema.TextContent messageText = assertInstanceOf(McpSchema.TextContent.class,
+									request.messages().get(0).content());
+							receivedPrompt.set(request.systemPrompt());
+							receivedMessage.set(messageText.text());
+							receivedMaxTokens.set(request.maxTokens());
 
-				return new McpSchema.CreateMessageResult(McpSchema.Role.USER, new McpSchema.TextContent(response),
-						"modelId", McpSchema.CreateMessageResult.StopReason.END_TURN);
-			}), client -> {
-				client.initialize();
+							return new McpSchema.CreateMessageResult(McpSchema.Role.USER,
+									new McpSchema.TextContent(response),
+									"modelId", McpSchema.CreateMessageResult.StopReason.END_TURN);
+						}),
+				client -> {
+					client.initialize();
+					McpSchema.CallToolResult result = client.callTool(
+							new McpSchema.CallToolRequest("sampleLLM", Map.of("prompt", message, "maxTokens",
+									maxTokens)));
 
-				McpSchema.CallToolResult result = client.callTool(
-						new McpSchema.CallToolRequest("sampleLLM", Map.of("prompt", message, "maxTokens", maxTokens)));
+					// Verify tool response to ensure our sampling response was passed through
+					assertThat(result.content()).hasAtLeastOneElementOfType(McpSchema.TextContent.class);
+					assertThat(result.content()).allSatisfy(content -> {
+						if (!(content instanceof McpSchema.TextContent)) {
+							return;
+						}
+						McpSchema.TextContent text = (McpSchema.TextContent) content;
+						assertThat(text.text()).endsWith(response); // Prefixed
+					});
 
-				// Verify tool response to ensure our sampling response was passed through
-				assertThat(result.content()).hasAtLeastOneElementOfType(McpSchema.TextContent.class);
-				assertThat(result.content()).allSatisfy(content -> {
-					if (!(content instanceof McpSchema.TextContent text))
-						return;
-
-					assertThat(text.text()).endsWith(response); // Prefixed
+					// Verify sampling request parameters received in our callback
+					assertThat(receivedPrompt.get()).isNotEmpty();
+					assertThat(receivedMessage.get()).endsWith(message); // Prefixed
+					assertThat(receivedMaxTokens.get()).isEqualTo(maxTokens);
 				});
-
-				// Verify sampling request parameters received in our callback
-				assertThat(receivedPrompt.get()).isNotEmpty();
-				assertThat(receivedMessage.get()).endsWith(message); // Prefixed
-				assertThat(receivedMaxTokens.get()).isEqualTo(maxTokens);
-			});
 	}
 
 	// ---------------------------------------
@@ -662,38 +700,40 @@ public abstract class AbstractMcpSyncClientTests {
 		List<McpSchema.ProgressNotification> receivedNotifications = new CopyOnWriteArrayList<>();
 		CountDownLatch latch = new CountDownLatch(2);
 
-		withClient(createMcpTransport(), builder -> builder.progressConsumer(notification -> {
-			System.out.println("Received progress notification: " + notification);
-			receivedNotifications.add(notification);
-			progressNotificationCount.incrementAndGet();
-			latch.countDown();
-		}), client -> {
-			client.initialize();
+		withClient(
+				createMcpTransport(),
+				builder -> builder.progressConsumer(notification -> {
+					System.out.println("Received progress notification: " + notification);
+					receivedNotifications.add(notification);
+					progressNotificationCount.incrementAndGet();
+					latch.countDown();
+				}),
+				client -> {
+					client.initialize();
 
-			// Call a tool that sends progress notifications
-			CallToolRequest request = CallToolRequest.builder()
-				.name("longRunningOperation")
-				.arguments(Map.of("duration", 1, "steps", 2))
-				.progressToken("test-token")
-				.build();
+					// Call a tool that sends progress notifications
+					CallToolRequest request = CallToolRequest.builder()
+							.name("longRunningOperation")
+							.arguments(Map.of("duration", 1, "steps", 2))
+							.progressToken("test-token")
+							.build();
 
-			CallToolResult result = client.callTool(request);
+					CallToolResult result = client.callTool(request);
 
-			assertThat(result).isNotNull();
+					assertThat(result).isNotNull();
 
-			try {
-				// Wait for progress notifications to be processed
-				latch.await(3, TimeUnit.SECONDS);
-			}
-			catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+					try {
+						// Wait for progress notifications to be processed
+						latch.await(3, TimeUnit.SECONDS);
+					} catch (InterruptedException e) {
+						log.error("Interrupted while waiting for progress notifications", e);
+					}
 
-			assertThat(progressNotificationCount.get()).isEqualTo(2);
+					assertThat(progressNotificationCount.get()).isEqualTo(2);
 
-			assertThat(receivedNotifications).isNotEmpty();
-			assertThat(receivedNotifications.get(0).progressToken()).isEqualTo("test-token");
-		});
+					assertThat(receivedNotifications).isNotEmpty();
+					assertThat(receivedNotifications.get(0).progressToken()).isEqualTo("test-token");
+				});
 	}
 
 }

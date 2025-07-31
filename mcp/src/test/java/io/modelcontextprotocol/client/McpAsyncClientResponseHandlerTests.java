@@ -47,9 +47,14 @@ class McpAsyncClientResponseHandlerTests {
 				mockServerCapabilities, mockServerInfo, "Test instructions");
 
 		return new MockMcpClientTransport((t, message) -> {
-			if (message instanceof McpSchema.JSONRPCRequest r && METHOD_INITIALIZE.equals(r.method())) {
-				McpSchema.JSONRPCResponse initResponse = new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION,
-						r.id(), mockInitResult, null);
+			if (message instanceof McpSchema.JSONRPCRequest
+					&& METHOD_INITIALIZE.equals(((McpSchema.JSONRPCRequest) message).method())
+			) {
+				McpSchema.JSONRPCResponse initResponse = new McpSchema.JSONRPCResponse(
+						McpSchema.JSONRPC_VERSION,
+						((McpSchema.JSONRPCRequest) message).id(),
+						mockInitResult,
+						null);
 				t.simulateIncomingMessage(initResponse);
 			}
 		});

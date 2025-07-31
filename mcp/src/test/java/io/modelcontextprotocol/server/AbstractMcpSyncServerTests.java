@@ -27,8 +27,7 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpServerTransportProvider;
 
 /**
- * Test suite for the {@link McpSyncServer} that can be used with different
- * {@link McpServerTransportProvider} implementations.
+ * Test suite for the {@link McpSyncServer}
  *
  * @author Christian Tzolov
  */
@@ -41,7 +40,9 @@ public abstract class AbstractMcpSyncServerTests {
 
 	private static final String TEST_PROMPT_NAME = "test-prompt";
 
-	abstract protected McpServer.SyncSpecification<?> prepareSyncServerBuilder();
+	private static final String EMPTY_JSON_SCHEMA = "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{}}";
+
+    abstract protected McpServer.SyncSpecification<?> prepareSyncServerBuilder();
 
 	protected void onStart() {
 	}
@@ -69,9 +70,10 @@ public abstract class AbstractMcpSyncServerTests {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("Transport provider must not be null");
 
-		assertThatThrownBy(() -> prepareSyncServerBuilder().serverInfo(null))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Server info must not be null");
+		assertThatThrownBy(() -> prepareSyncServerBuilder()
+                .serverInfo(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Server info must not be null");
 	}
 
 	@Test
@@ -101,22 +103,15 @@ public abstract class AbstractMcpSyncServerTests {
 	// Tools Tests
 	// ---------------------------------------
 
-	String emptyJsonSchema = """
-			{
-				"$schema": "http://json-schema.org/draft-07/schema#",
-				"type": "object",
-				"properties": {}
-			}
-			""";
-
 	@Test
 	@Deprecated
 	void testAddTool() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
-		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
+		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", EMPTY_JSON_SCHEMA);
 		assertThatCode(() -> mcpSyncServer.addTool(new McpServerFeatures.SyncToolSpecification(newTool,
 				(exchange, args) -> new CallToolResult(List.of(), false))))
 			.doesNotThrowAnyException();
@@ -126,11 +121,12 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testAddToolCall() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
-		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
+		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", EMPTY_JSON_SCHEMA);
 		assertThatCode(() -> mcpSyncServer.addTool(McpServerFeatures.SyncToolSpecification.builder()
 			.tool(newTool)
 			.callHandler((exchange, request) -> new CallToolResult(List.of(), false))
@@ -142,12 +138,13 @@ public abstract class AbstractMcpSyncServerTests {
 	@Test
 	@Deprecated
 	void testAddDuplicateTool() {
-		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
+		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", EMPTY_JSON_SCHEMA);
 
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tool(duplicateTool, (exchange, args) -> new CallToolResult(List.of(), false))
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tool(duplicateTool, (exchange, args) -> new CallToolResult(List.of(), false))
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.addTool(new McpServerFeatures.SyncToolSpecification(duplicateTool,
 				(exchange, args) -> new CallToolResult(List.of(), false))))
@@ -159,12 +156,13 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testAddDuplicateToolCall() {
-		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
+		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", EMPTY_JSON_SCHEMA);
 
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(duplicateTool, (exchange, request) -> new CallToolResult(List.of(), false))
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(duplicateTool, (exchange, request) -> new CallToolResult(List.of(), false))
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.addTool(McpServerFeatures.SyncToolSpecification.builder()
 			.tool(duplicateTool)
@@ -178,19 +176,20 @@ public abstract class AbstractMcpSyncServerTests {
 	@Test
 	void testDuplicateToolCallDuringBuilding() {
 		Tool duplicateTool = new Tool("duplicate-build-toolcall", "Duplicate toolcall during building",
-				emptyJsonSchema);
+				EMPTY_JSON_SCHEMA);
 
-		assertThatThrownBy(() -> prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(duplicateTool, (exchange, request) -> new CallToolResult(List.of(), false))
-			.toolCall(duplicateTool, (exchange, request) -> new CallToolResult(List.of(), false)) // Duplicate!
-			.build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Tool with name 'duplicate-build-toolcall' is already registered.");
+		assertThatThrownBy(() -> prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(duplicateTool, (exchange, request) -> new CallToolResult(List.of(), false))
+                .toolCall(duplicateTool, (exchange, request) -> new CallToolResult(List.of(), false)) // Duplicate!
+                .build()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tool with name 'duplicate-build-toolcall' is already registered.");
 	}
 
 	@Test
 	void testDuplicateToolsInBatchListRegistration() {
-		Tool duplicateTool = new Tool("batch-list-tool", "Duplicate tool in batch list", emptyJsonSchema);
+		Tool duplicateTool = new Tool("batch-list-tool", "Duplicate tool in batch list", EMPTY_JSON_SCHEMA);
 		List<McpServerFeatures.SyncToolSpecification> specs = List.of(
 				McpServerFeatures.SyncToolSpecification.builder()
 					.tool(duplicateTool)
@@ -202,40 +201,43 @@ public abstract class AbstractMcpSyncServerTests {
 					.build() // Duplicate!
 		);
 
-		assertThatThrownBy(() -> prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tools(specs)
-			.build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Tool with name 'batch-list-tool' is already registered.");
+		assertThatThrownBy(() -> prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tools(specs)
+                .build()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tool with name 'batch-list-tool' is already registered.");
 	}
 
 	@Test
 	void testDuplicateToolsInBatchVarargsRegistration() {
-		Tool duplicateTool = new Tool("batch-varargs-tool", "Duplicate tool in batch varargs", emptyJsonSchema);
+		Tool duplicateTool = new Tool("batch-varargs-tool", "Duplicate tool in batch varargs", EMPTY_JSON_SCHEMA);
 
-		assertThatThrownBy(() -> prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tools(McpServerFeatures.SyncToolSpecification.builder()
-				.tool(duplicateTool)
-				.callHandler((exchange, request) -> new CallToolResult(List.of(), false))
-				.build(),
-					McpServerFeatures.SyncToolSpecification.builder()
-						.tool(duplicateTool)
-						.callHandler((exchange, request) -> new CallToolResult(List.of(), false))
-						.build() // Duplicate!
-			)
-			.build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Tool with name 'batch-varargs-tool' is already registered.");
+		assertThatThrownBy(() -> prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tools(McpServerFeatures.SyncToolSpecification.builder()
+                    .tool(duplicateTool)
+                    .callHandler((exchange, request) -> new CallToolResult(List.of(), false))
+                    .build(),
+                        McpServerFeatures.SyncToolSpecification.builder()
+                            .tool(duplicateTool)
+                            .callHandler((exchange, request) -> new CallToolResult(List.of(), false))
+                            .build() // Duplicate!
+                )
+                .build()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tool with name 'batch-varargs-tool' is already registered.");
 	}
 
 	@Test
 	void testRemoveTool() {
-		Tool tool = new McpSchema.Tool(TEST_TOOL_NAME, "Test tool", emptyJsonSchema);
+		Tool tool = new McpSchema.Tool(TEST_TOOL_NAME, "Test tool", EMPTY_JSON_SCHEMA);
 
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(tool, (exchange, args) -> new CallToolResult(List.of(), false))
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(tool, (exchange, args) -> new CallToolResult(List.of(), false))
+                .build();
 
 		assertThatCode(() -> mcpSyncServer.removeTool(TEST_TOOL_NAME)).doesNotThrowAnyException();
 
@@ -244,9 +246,10 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testRemoveNonexistentTool() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.removeTool("nonexistent-tool")).isInstanceOf(McpError.class)
 			.hasMessage("Tool with name 'nonexistent-tool' not found");
@@ -305,9 +308,10 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testAddResourceWithNullSpecification() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().resources(true, false).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().resources(true, false).build())
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.addResource((McpServerFeatures.SyncResourceSpecification) null))
 			.isInstanceOf(McpError.class)
@@ -389,10 +393,11 @@ public abstract class AbstractMcpSyncServerTests {
 				(exchange, req) -> new GetPromptResult("Test prompt description", List
 					.of(new PromptMessage(McpSchema.Role.ASSISTANT, new McpSchema.TextContent("Test content")))));
 
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().prompts(true).build())
-			.prompts(specification)
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().prompts(true).build())
+                .prompts(specification)
+                .build();
 
 		assertThatCode(() -> mcpSyncServer.removePrompt(TEST_PROMPT_NAME)).doesNotThrowAnyException();
 
@@ -401,9 +406,10 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testRemoveNonexistentPrompt() {
-		var mcpSyncServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().prompts(true).build())
-			.build();
+		var mcpSyncServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().prompts(true).build())
+                .build();
 
 		assertThatThrownBy(() -> mcpSyncServer.removePrompt("nonexistent-prompt")).isInstanceOf(McpError.class)
 			.hasMessage("Prompt with name 'nonexistent-prompt' not found");
@@ -421,14 +427,15 @@ public abstract class AbstractMcpSyncServerTests {
 		var rootsReceived = new McpSchema.Root[1];
 		var consumerCalled = new boolean[1];
 
-		var singleConsumerServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.rootsChangeHandlers(List.of((exchange, roots) -> {
-				consumerCalled[0] = true;
-				if (!roots.isEmpty()) {
-					rootsReceived[0] = roots.get(0);
-				}
-			}))
-			.build();
+		var singleConsumerServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .rootsChangeHandlers(List.of((exchange, roots) -> {
+                    consumerCalled[0] = true;
+                    if (!roots.isEmpty()) {
+                        rootsReceived[0] = roots.get(0);
+                    }
+                }))
+                .build();
 
 		assertThat(singleConsumerServer).isNotNull();
 		assertThatCode(() -> singleConsumerServer.closeGracefully()).doesNotThrowAnyException();
@@ -439,23 +446,25 @@ public abstract class AbstractMcpSyncServerTests {
 		var consumer2Called = new boolean[1];
 		var rootsContent = new List[1];
 
-		var multipleConsumersServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.rootsChangeHandlers(List.of((exchange, roots) -> {
-				consumer1Called[0] = true;
-				rootsContent[0] = roots;
-			}, (exchange, roots) -> consumer2Called[0] = true))
-			.build();
+		var multipleConsumersServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .rootsChangeHandlers(List.of((exchange, roots) -> {
+                    consumer1Called[0] = true;
+                    rootsContent[0] = roots;
+                }, (exchange, roots) -> consumer2Called[0] = true))
+                .build();
 
 		assertThat(multipleConsumersServer).isNotNull();
 		assertThatCode(() -> multipleConsumersServer.closeGracefully()).doesNotThrowAnyException();
 		onClose();
 
 		// Test error handling
-		var errorHandlingServer = prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.rootsChangeHandlers(List.of((exchange, roots) -> {
-				throw new RuntimeException("Test error");
-			}))
-			.build();
+		var errorHandlingServer = prepareSyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .rootsChangeHandlers(List.of((exchange, roots) -> {
+                    throw new RuntimeException("Test error");
+                }))
+                .build();
 
 		assertThat(errorHandlingServer).isNotNull();
 		assertThatCode(() -> errorHandlingServer.closeGracefully()).doesNotThrowAnyException();

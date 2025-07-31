@@ -152,7 +152,8 @@ public class McpClientSession implements McpSession {
 	}
 
 	private void handle(McpSchema.JSONRPCMessage message) {
-		if (message instanceof McpSchema.JSONRPCResponse response) {
+		if (message instanceof McpSchema.JSONRPCResponse) {
+			McpSchema.JSONRPCResponse response = (McpSchema.JSONRPCResponse) message;
 			logger.debug("Received Response: {}", response);
 			var sink = pendingResponses.remove(response.id());
 			if (sink == null) {
@@ -161,8 +162,8 @@ public class McpClientSession implements McpSession {
 			else {
 				sink.success(response);
 			}
-		}
-		else if (message instanceof McpSchema.JSONRPCRequest request) {
+		} else if (message instanceof McpSchema.JSONRPCRequest) {
+			McpSchema.JSONRPCRequest request = (McpSchema.JSONRPCRequest) message;
 			logger.debug("Received request: {}", request);
 			handleIncomingRequest(request).onErrorResume(error -> {
 				var errorResponse = new McpSchema.JSONRPCResponse(McpSchema.JSONRPC_VERSION, request.id(), null,
@@ -173,15 +174,14 @@ public class McpClientSession implements McpSession {
 				logger.warn("Issue sending response to the client, ", t);
 				return true;
 			}).subscribe();
-		}
-		else if (message instanceof McpSchema.JSONRPCNotification notification) {
+		} else if (message instanceof McpSchema.JSONRPCNotification) {
+			McpSchema.JSONRPCNotification notification = (McpSchema.JSONRPCNotification) message;
 			logger.debug("Received notification: {}", notification);
 			handleIncomingNotification(notification).onErrorComplete(t -> {
 				logger.error("Error handling notification: {}", t.getMessage());
 				return true;
 			}).subscribe();
-		}
-		else {
+		} else {
 			logger.warn("Received unknown message type: {}", message);
 		}
 	}

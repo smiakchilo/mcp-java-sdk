@@ -26,16 +26,12 @@ import reactor.test.StepVerifier;
  */
 class AsyncToolSpecificationBuilderTest {
 
-	String emptyJsonSchema = """
-			{
-				"type": "object"
-			}
-			""";
+	private static final String EMPTY_JSON_SCHEMA = "{\"type\": \"object\"}";
 
 	@Test
 	void builderShouldCreateValidAsyncToolSpecification() {
 
-		Tool tool = new Tool("test-tool", "A test tool", emptyJsonSchema);
+		Tool tool = new Tool("test-tool", "A test tool", EMPTY_JSON_SCHEMA);
 
 		McpServerFeatures.AsyncToolSpecification specification = McpServerFeatures.AsyncToolSpecification.builder()
 			.tool(tool)
@@ -58,7 +54,7 @@ class AsyncToolSpecificationBuilderTest {
 
 	@Test
 	void builderShouldThrowExceptionWhenCallToolIsNull() {
-		Tool tool = new Tool("test-tool", "A test tool", emptyJsonSchema);
+		Tool tool = new Tool("test-tool", "A test tool", EMPTY_JSON_SCHEMA);
 
 		assertThatThrownBy(() -> McpServerFeatures.AsyncToolSpecification.builder().tool(tool).build())
 			.isInstanceOf(IllegalArgumentException.class)
@@ -67,7 +63,7 @@ class AsyncToolSpecificationBuilderTest {
 
 	@Test
 	void builderShouldAllowMethodChaining() {
-		Tool tool = new Tool("test-tool", "A test tool", emptyJsonSchema);
+		Tool tool = new Tool("test-tool", "A test tool", EMPTY_JSON_SCHEMA);
 		McpServerFeatures.AsyncToolSpecification.Builder builder = McpServerFeatures.AsyncToolSpecification.builder();
 
 		// Then - verify method chaining returns the same builder instance
@@ -78,7 +74,7 @@ class AsyncToolSpecificationBuilderTest {
 
 	@Test
 	void builtSpecificationShouldExecuteCallToolCorrectly() {
-		Tool tool = new Tool("calculator", "Simple calculator", emptyJsonSchema);
+		Tool tool = new Tool("calculator", "Simple calculator", EMPTY_JSON_SCHEMA);
 		String expectedResult = "42";
 
 		McpServerFeatures.AsyncToolSpecification specification = McpServerFeatures.AsyncToolSpecification.builder()
@@ -103,7 +99,7 @@ class AsyncToolSpecificationBuilderTest {
 	@Test
 	@SuppressWarnings("deprecation")
 	void deprecatedConstructorShouldWorkCorrectly() {
-		Tool tool = new Tool("deprecated-tool", "A deprecated tool", emptyJsonSchema);
+		Tool tool = new Tool("deprecated-tool", "A deprecated tool", EMPTY_JSON_SCHEMA);
 		String expectedResult = "deprecated result";
 
 		// Test the deprecated constructor that takes a 'call' function
@@ -143,7 +139,7 @@ class AsyncToolSpecificationBuilderTest {
 
 	@Test
 	void fromSyncShouldConvertSyncToolSpecificationCorrectly() {
-		Tool tool = new Tool("sync-tool", "A sync tool", emptyJsonSchema);
+		Tool tool = new Tool("sync-tool", "A sync tool", EMPTY_JSON_SCHEMA);
 		String expectedResult = "sync result";
 
 		// Create a sync tool specification
@@ -178,7 +174,7 @@ class AsyncToolSpecificationBuilderTest {
 	@Test
 	@SuppressWarnings("deprecation")
 	void fromSyncShouldConvertSyncToolSpecificationWithDeprecatedCallCorrectly() {
-		Tool tool = new Tool("sync-deprecated-tool", "A sync tool with deprecated call", emptyJsonSchema);
+		Tool tool = new Tool("sync-deprecated-tool", "A sync tool with deprecated call", EMPTY_JSON_SCHEMA);
 		String expectedResult = "sync deprecated result";
 		McpAsyncServerExchange nullExchange = null; // Mock or create a suitable exchange
 													// if needed

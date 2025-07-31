@@ -44,7 +44,13 @@ public abstract class AbstractMcpAsyncServerTests {
 
 	private static final String TEST_PROMPT_NAME = "test-prompt";
 
-	abstract protected McpServer.AsyncSpecification<?> prepareAsyncServerBuilder();
+	private static final String EMPTY_JSON_SCHEMA = "{\n" +
+			"\t\"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+			"\t\"type\": \"object\",\n" +
+			"\t\"properties\": {}\n" +
+			"}";
+
+    abstract protected McpServer.AsyncSpecification<?> prepareAsyncServerBuilder();
 
 	protected void onStart() {
 	}
@@ -72,9 +78,10 @@ public abstract class AbstractMcpAsyncServerTests {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("Transport provider must not be null");
 
-		assertThatThrownBy(() -> prepareAsyncServerBuilder().serverInfo((McpSchema.Implementation) null))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Server info must not be null");
+		assertThatThrownBy(() -> prepareAsyncServerBuilder()
+                .serverInfo((McpSchema.Implementation) null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Server info must not be null");
 	}
 
 	@Test
@@ -95,21 +102,15 @@ public abstract class AbstractMcpAsyncServerTests {
 	// ---------------------------------------
 	// Tools Tests
 	// ---------------------------------------
-	String emptyJsonSchema = """
-			{
-				"$schema": "http://json-schema.org/draft-07/schema#",
-				"type": "object",
-				"properties": {}
-			}
-			""";
 
 	@Test
 	@Deprecated
 	void testAddTool() {
-		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", EMPTY_JSON_SCHEMA);
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
 		StepVerifier.create(mcpAsyncServer.addTool(new McpServerFeatures.AsyncToolSpecification(newTool,
 				(exchange, args) -> Mono.just(new CallToolResult(List.of(), false)))))
@@ -120,10 +121,11 @@ public abstract class AbstractMcpAsyncServerTests {
 
 	@Test
 	void testAddToolCall() {
-		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", EMPTY_JSON_SCHEMA);
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
 		StepVerifier.create(mcpAsyncServer.addTool(McpServerFeatures.AsyncToolSpecification.builder()
 			.tool(newTool)
@@ -136,12 +138,13 @@ public abstract class AbstractMcpAsyncServerTests {
 	@Test
 	@Deprecated
 	void testAddDuplicateTool() {
-		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
+		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", EMPTY_JSON_SCHEMA);
 
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tool(duplicateTool, (exchange, args) -> Mono.just(new CallToolResult(List.of(), false)))
-			.build();
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tool(duplicateTool, (exchange, args) -> Mono.just(new CallToolResult(List.of(), false)))
+                .build();
 
 		StepVerifier
 			.create(mcpAsyncServer.addTool(new McpServerFeatures.AsyncToolSpecification(duplicateTool,
@@ -156,12 +159,13 @@ public abstract class AbstractMcpAsyncServerTests {
 
 	@Test
 	void testAddDuplicateToolCall() {
-		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
+		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", EMPTY_JSON_SCHEMA);
 
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(duplicateTool, (exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
-			.build();
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(duplicateTool, (exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
+                .build();
 
 		StepVerifier.create(mcpAsyncServer.addTool(McpServerFeatures.AsyncToolSpecification.builder()
 			.tool(duplicateTool)
@@ -177,19 +181,20 @@ public abstract class AbstractMcpAsyncServerTests {
 	@Test
 	void testDuplicateToolCallDuringBuilding() {
 		Tool duplicateTool = new Tool("duplicate-build-toolcall", "Duplicate toolcall during building",
-				emptyJsonSchema);
+				EMPTY_JSON_SCHEMA);
 
-		assertThatThrownBy(() -> prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(duplicateTool, (exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
-			.toolCall(duplicateTool, (exchange, request) -> Mono.just(new CallToolResult(List.of(), false))) // Duplicate!
-			.build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Tool with name 'duplicate-build-toolcall' is already registered.");
+		assertThatThrownBy(() -> prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(duplicateTool, (exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
+                .toolCall(duplicateTool, (exchange, request) -> Mono.just(new CallToolResult(List.of(), false))) // Duplicate!
+                .build()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tool with name 'duplicate-build-toolcall' is already registered.");
 	}
 
 	@Test
 	void testDuplicateToolsInBatchListRegistration() {
-		Tool duplicateTool = new Tool("batch-list-tool", "Duplicate tool in batch list", emptyJsonSchema);
+		Tool duplicateTool = new Tool("batch-list-tool", "Duplicate tool in batch list", EMPTY_JSON_SCHEMA);
 		List<McpServerFeatures.AsyncToolSpecification> specs = List.of(
 				McpServerFeatures.AsyncToolSpecification.builder()
 					.tool(duplicateTool)
@@ -201,40 +206,43 @@ public abstract class AbstractMcpAsyncServerTests {
 					.build() // Duplicate!
 		);
 
-		assertThatThrownBy(() -> prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tools(specs)
-			.build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Tool with name 'batch-list-tool' is already registered.");
+		assertThatThrownBy(() -> prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tools(specs)
+                .build()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tool with name 'batch-list-tool' is already registered.");
 	}
 
 	@Test
 	void testDuplicateToolsInBatchVarargsRegistration() {
-		Tool duplicateTool = new Tool("batch-varargs-tool", "Duplicate tool in batch varargs", emptyJsonSchema);
+		Tool duplicateTool = new Tool("batch-varargs-tool", "Duplicate tool in batch varargs", EMPTY_JSON_SCHEMA);
 
-		assertThatThrownBy(() -> prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.tools(McpServerFeatures.AsyncToolSpecification.builder()
-				.tool(duplicateTool)
-				.callHandler((exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
-				.build(),
-					McpServerFeatures.AsyncToolSpecification.builder()
-						.tool(duplicateTool)
-						.callHandler((exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
-						.build() // Duplicate!
-			)
-			.build()).isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("Tool with name 'batch-varargs-tool' is already registered.");
+		assertThatThrownBy(() -> prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .tools(McpServerFeatures.AsyncToolSpecification.builder()
+                    .tool(duplicateTool)
+                    .callHandler((exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
+                    .build(),
+                        McpServerFeatures.AsyncToolSpecification.builder()
+                            .tool(duplicateTool)
+                            .callHandler((exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
+                            .build() // Duplicate!
+                )
+                .build()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Tool with name 'batch-varargs-tool' is already registered.");
 	}
 
 	@Test
 	void testRemoveTool() {
-		Tool too = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
+		Tool too = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", EMPTY_JSON_SCHEMA);
 
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(too, (exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
-			.build();
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(too, (exchange, request) -> Mono.just(new CallToolResult(List.of(), false)))
+                .build();
 
 		StepVerifier.create(mcpAsyncServer.removeTool(TEST_TOOL_NAME)).verifyComplete();
 
@@ -243,9 +251,10 @@ public abstract class AbstractMcpAsyncServerTests {
 
 	@Test
 	void testRemoveNonexistentTool() {
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.build();
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .build();
 
 		StepVerifier.create(mcpAsyncServer.removeTool("nonexistent-tool")).verifyErrorSatisfies(error -> {
 			assertThat(error).isInstanceOf(McpError.class).hasMessage("Tool with name 'nonexistent-tool' not found");
@@ -256,12 +265,13 @@ public abstract class AbstractMcpAsyncServerTests {
 
 	@Test
 	void testNotifyToolsListChanged() {
-		Tool too = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
+		Tool too = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", EMPTY_JSON_SCHEMA);
 
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().tools(true).build())
-			.toolCall(too, (exchange, args) -> Mono.just(new CallToolResult(List.of(), false)))
-			.build();
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().tools(true).build())
+                .toolCall(too, (exchange, args) -> Mono.just(new CallToolResult(List.of(), false)))
+                .build();
 
 		StepVerifier.create(mcpAsyncServer.notifyToolsListChanged()).verifyComplete();
 
@@ -311,9 +321,10 @@ public abstract class AbstractMcpAsyncServerTests {
 
 	@Test
 	void testAddResourceWithNullSpecification() {
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().resources(true, false).build())
-			.build();
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().resources(true, false).build())
+                .build();
 
 		StepVerifier.create(mcpAsyncServer.addResource((McpServerFeatures.AsyncResourceSpecification) null))
 			.verifyErrorSatisfies(error -> {
@@ -411,10 +422,11 @@ public abstract class AbstractMcpAsyncServerTests {
 				prompt, (exchange, req) -> Mono.just(new GetPromptResult("Test prompt description", List
 					.of(new PromptMessage(McpSchema.Role.ASSISTANT, new McpSchema.TextContent("Test content"))))));
 
-		var mcpAsyncServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().prompts(true).build())
-			.prompts(specification)
-			.build();
+		var mcpAsyncServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().prompts(true).build())
+                .prompts(specification)
+                .build();
 
 		StepVerifier.create(mcpAsyncServer.removePrompt(TEST_PROMPT_NAME_TO_REMOVE)).verifyComplete();
 
@@ -423,9 +435,10 @@ public abstract class AbstractMcpAsyncServerTests {
 
 	@Test
 	void testRemoveNonexistentPrompt() {
-		var mcpAsyncServer2 = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.capabilities(ServerCapabilities.builder().prompts(true).build())
-			.build();
+		var mcpAsyncServer2 = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder().prompts(true).build())
+                .build();
 
 		StepVerifier.create(mcpAsyncServer2.removePrompt("nonexistent-prompt")).verifyErrorSatisfies(error -> {
 			assertThat(error).isInstanceOf(McpError.class)
@@ -446,14 +459,15 @@ public abstract class AbstractMcpAsyncServerTests {
 		var rootsReceived = new McpSchema.Root[1];
 		var consumerCalled = new boolean[1];
 
-		var singleConsumerServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.rootsChangeHandlers(List.of((exchange, roots) -> Mono.fromRunnable(() -> {
-				consumerCalled[0] = true;
-				if (!roots.isEmpty()) {
-					rootsReceived[0] = roots.get(0);
-				}
-			})))
-			.build();
+		var singleConsumerServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .rootsChangeHandlers(List.of((exchange, roots) -> Mono.fromRunnable(() -> {
+                    consumerCalled[0] = true;
+                    if (!roots.isEmpty()) {
+                        rootsReceived[0] = roots.get(0);
+                    }
+                })))
+                .build();
 
 		assertThat(singleConsumerServer).isNotNull();
 		assertThatCode(() -> singleConsumerServer.closeGracefully().block(Duration.ofSeconds(10)))
@@ -465,12 +479,13 @@ public abstract class AbstractMcpAsyncServerTests {
 		var consumer2Called = new boolean[1];
 		var rootsContent = new List[1];
 
-		var multipleConsumersServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.rootsChangeHandlers(List.of((exchange, roots) -> Mono.fromRunnable(() -> {
-				consumer1Called[0] = true;
-				rootsContent[0] = roots;
-			}), (exchange, roots) -> Mono.fromRunnable(() -> consumer2Called[0] = true)))
-			.build();
+		var multipleConsumersServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .rootsChangeHandlers(List.of((exchange, roots) -> Mono.fromRunnable(() -> {
+                    consumer1Called[0] = true;
+                    rootsContent[0] = roots;
+                }), (exchange, roots) -> Mono.fromRunnable(() -> consumer2Called[0] = true)))
+                .build();
 
 		assertThat(multipleConsumersServer).isNotNull();
 		assertThatCode(() -> multipleConsumersServer.closeGracefully().block(Duration.ofSeconds(10)))
@@ -478,11 +493,12 @@ public abstract class AbstractMcpAsyncServerTests {
 		onClose();
 
 		// Test error handling
-		var errorHandlingServer = prepareAsyncServerBuilder().serverInfo("test-server", "1.0.0")
-			.rootsChangeHandlers(List.of((exchange, roots) -> {
-				throw new RuntimeException("Test error");
-			}))
-			.build();
+		var errorHandlingServer = prepareAsyncServerBuilder()
+                .serverInfo("test-server", "1.0.0")
+                .rootsChangeHandlers(List.of((exchange, roots) -> {
+                    throw new RuntimeException("Test error");
+                }))
+                .build();
 
 		assertThat(errorHandlingServer).isNotNull();
 		assertThatCode(() -> errorHandlingServer.closeGracefully().block(Duration.ofSeconds(10)))

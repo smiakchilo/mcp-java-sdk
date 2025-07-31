@@ -40,7 +40,13 @@ public abstract class AbstractMcpSyncServerTests {
 
 	private static final String TEST_PROMPT_NAME = "test-prompt";
 
-	abstract protected McpServer.SyncSpecification<?> prepareSyncServerBuilder();
+	private static final String EMPTY_JSON_SCHEMA = "{\n" +
+			"\t\"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+			"\t\"type\": \"object\",\n" +
+			"\t\"properties\": {}\n" +
+			"}";
+
+    abstract protected McpServer.SyncSpecification<?> prepareSyncServerBuilder();
 
 	protected void onStart() {
 	}
@@ -101,14 +107,6 @@ public abstract class AbstractMcpSyncServerTests {
 	// Tools Tests
 	// ---------------------------------------
 
-	String emptyJsonSchema = """
-			{
-				"$schema": "http://json-schema.org/draft-07/schema#",
-				"type": "object",
-				"properties": {}
-			}
-			""";
-
 	@Test
 	@Deprecated
 	void testAddTool() {
@@ -117,7 +115,7 @@ public abstract class AbstractMcpSyncServerTests {
                 .capabilities(ServerCapabilities.builder().tools(true).build())
                 .build();
 
-		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
+		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", EMPTY_JSON_SCHEMA);
 		assertThatCode(() -> mcpSyncServer.addTool(new McpServerFeatures.SyncToolSpecification(newTool,
 				(exchange, args) -> new CallToolResult(List.of(), false))))
 			.doesNotThrowAnyException();
@@ -132,7 +130,7 @@ public abstract class AbstractMcpSyncServerTests {
                 .capabilities(ServerCapabilities.builder().tools(true).build())
                 .build();
 
-		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", emptyJsonSchema);
+		Tool newTool = new McpSchema.Tool("new-tool", "New test tool", EMPTY_JSON_SCHEMA);
 		assertThatCode(() -> mcpSyncServer.addTool(McpServerFeatures.SyncToolSpecification.builder()
 			.tool(newTool)
 			.callHandler((exchange, request) -> new CallToolResult(List.of(), false))
@@ -144,7 +142,7 @@ public abstract class AbstractMcpSyncServerTests {
 	@Test
 	@Deprecated
 	void testAddDuplicateTool() {
-		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
+		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", EMPTY_JSON_SCHEMA);
 
 		var mcpSyncServer = prepareSyncServerBuilder()
                 .serverInfo("test-server", "1.0.0")
@@ -162,7 +160,7 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testAddDuplicateToolCall() {
-		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", emptyJsonSchema);
+		Tool duplicateTool = new McpSchema.Tool(TEST_TOOL_NAME, "Duplicate tool", EMPTY_JSON_SCHEMA);
 
 		var mcpSyncServer = prepareSyncServerBuilder()
                 .serverInfo("test-server", "1.0.0")
@@ -182,7 +180,7 @@ public abstract class AbstractMcpSyncServerTests {
 	@Test
 	void testDuplicateToolCallDuringBuilding() {
 		Tool duplicateTool = new Tool("duplicate-build-toolcall", "Duplicate toolcall during building",
-				emptyJsonSchema);
+				EMPTY_JSON_SCHEMA);
 
 		assertThatThrownBy(() -> prepareSyncServerBuilder().serverInfo("test-server", "1.0.0")
 			.capabilities(ServerCapabilities.builder().tools(true).build())
@@ -194,7 +192,7 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testDuplicateToolsInBatchListRegistration() {
-		Tool duplicateTool = new Tool("batch-list-tool", "Duplicate tool in batch list", emptyJsonSchema);
+		Tool duplicateTool = new Tool("batch-list-tool", "Duplicate tool in batch list", EMPTY_JSON_SCHEMA);
 		List<McpServerFeatures.SyncToolSpecification> specs = List.of(
 				McpServerFeatures.SyncToolSpecification.builder()
 					.tool(duplicateTool)
@@ -216,7 +214,7 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testDuplicateToolsInBatchVarargsRegistration() {
-		Tool duplicateTool = new Tool("batch-varargs-tool", "Duplicate tool in batch varargs", emptyJsonSchema);
+		Tool duplicateTool = new Tool("batch-varargs-tool", "Duplicate tool in batch varargs", EMPTY_JSON_SCHEMA);
 
 		assertThatThrownBy(() -> prepareSyncServerBuilder()
                 .serverInfo("test-server", "1.0.0")
@@ -236,7 +234,7 @@ public abstract class AbstractMcpSyncServerTests {
 
 	@Test
 	void testRemoveTool() {
-		Tool tool = new McpSchema.Tool(TEST_TOOL_NAME, "Test tool", emptyJsonSchema);
+		Tool tool = new McpSchema.Tool(TEST_TOOL_NAME, "Test tool", EMPTY_JSON_SCHEMA);
 
 		var mcpSyncServer = prepareSyncServerBuilder()
                 .serverInfo("test-server", "1.0.0")

@@ -534,30 +534,24 @@ public abstract class AbstractMcpAsyncClientTests {
 
 						// Validate content based on its type with more comprehensive
 						// checks
-						switch (content.mimeType()) {
-							case "text/plain" -> {
-								TextResourceContents textContent = assertInstanceOf(TextResourceContents.class,
-										content);
-								assertThat(textContent.text()).isNotNull().isNotEmpty();
-								assertThat(textContent.uri()).isNotEmpty();
-							}
-							case "application/octet-stream" -> {
-								BlobResourceContents blobContent = assertInstanceOf(BlobResourceContents.class,
-										content);
-								assertThat(blobContent.blob()).isNotNull().isNotEmpty();
-								assertThat(blobContent.uri()).isNotNull().isNotEmpty();
-								// Validate base64 encoding format
-								assertThat(blobContent.blob()).matches("^[A-Za-z0-9+/]*={0,2}$");
-							}
-							default -> {
-
-								// Still validate basic properties
-								if (content instanceof TextResourceContents textContent) {
-									assertThat(textContent.text()).isNotNull();
-								}
-								else if (content instanceof BlobResourceContents blobContent) {
-									assertThat(blobContent.blob()).isNotNull();
-								}
+						if ("text/plain".equals(content.mimeType())) {
+							TextResourceContents textContent = assertInstanceOf(TextResourceContents.class, content);
+							assertThat(textContent.text()).isNotNull().isNotEmpty();
+							assertThat(textContent.uri()).isNotEmpty();
+						} else if ("application/octet-stream".equals(content.mimeType())) {
+							BlobResourceContents blobContent = assertInstanceOf(BlobResourceContents.class, content);
+							assertThat(blobContent.blob()).isNotNull().isNotEmpty();
+							assertThat(blobContent.uri()).isNotNull().isNotEmpty();
+							// Validate base64 encoding format
+							assertThat(blobContent.blob()).matches("^[A-Za-z0-9+/]*={0,2}$");
+						} else {
+							// Still validate basic properties
+							if (content instanceof TextResourceContents) {
+								TextResourceContents textContent = (TextResourceContents) content;
+								assertThat(textContent.text()).isNotNull();
+							} else if (content instanceof BlobResourceContents) {
+								BlobResourceContents blobContent = (BlobResourceContents) content;
+								assertThat(blobContent.blob()).isNotNull();
 							}
 						}
 					}
@@ -780,9 +774,10 @@ public abstract class AbstractMcpAsyncClientTests {
 						// through
 						assertThat(result.content()).hasAtLeastOneElementOfType(McpSchema.TextContent.class);
 						assertThat(result.content()).allSatisfy(content -> {
-							if (!(content instanceof McpSchema.TextContent text))
+							if (!(content instanceof McpSchema.TextContent)) {
 								return;
-
+							}
+							McpSchema.TextContent text = (McpSchema.TextContent) content;
 							assertThat(text.text()).endsWith(response); // Prefixed
 						});
 

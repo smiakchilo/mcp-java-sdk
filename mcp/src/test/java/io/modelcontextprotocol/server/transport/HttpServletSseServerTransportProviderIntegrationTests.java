@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -61,6 +61,8 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	private static final String CUSTOM_SSE_ENDPOINT = "/somePath/sse";
 
 	private static final String CUSTOM_MESSAGE_ENDPOINT = "/otherPath/mcp/message";
+
+	private static final String EMPTY_JSON_SCHEMA = "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{}}";
 
 	private HttpServletSseServerTransportProvider mcpServerTransportProvider;
 
@@ -113,7 +115,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	void testCreateMessageWithoutSamplingCapabilities() {
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				exchange.createMessage(mock(McpSchema.CreateMessageRequest.class)).block();
@@ -157,7 +159,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				null);
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				var createMessageRequest = McpSchema.CreateMessageRequest.builder()
@@ -234,7 +236,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				null);
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				var craeteMessageRequest = McpSchema.CreateMessageRequest.builder()
@@ -308,7 +310,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				null);
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				var craeteMessageRequest = McpSchema.CreateMessageRequest.builder()
@@ -360,7 +362,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	void testCreateElicitationWithoutElicitationCapabilities() {
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 				exchange.createElicitation(mock(ElicitRequest.class)).block();
 				return Mono.just(mock(CallToolResult.class));
@@ -400,7 +402,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				null);
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				var elicitationRequest = ElicitRequest.builder()
@@ -468,7 +470,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				null);
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				var elicitationRequest = ElicitRequest.builder()
@@ -533,7 +535,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				null);
 
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				var elicitationRequest = ElicitRequest.builder()
@@ -619,7 +621,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	void testRootsWithoutCapability() {
 
 		McpServerFeatures.SyncToolSpecification tool = McpServerFeatures.SyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				exchange.listRoots(); // try to list roots
@@ -728,30 +730,21 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 	// Tools Tests
 	// ---------------------------------------
 
-	String emptyJsonSchema = """
-			{
-				"$schema": "http://json-schema.org/draft-07/schema#",
-				"type": "object",
-				"properties": {}
-			}
-			""";
-
 	@Test
 	void testToolCallSuccess() {
 
 		var callResponse = new McpSchema.CallToolResult(List.of(new McpSchema.TextContent("CALL RESPONSE")), null);
 
 		McpServerFeatures.SyncToolSpecification tool1 = McpServerFeatures.SyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 				assertThat(McpTestServletFilter.getThreadLocalValue()).as("blocking code exectuion should be offloaded")
 					.isNull();
 				// perform a blocking call to a remote service
-				String response = RestClient.create()
-					.get()
-					.uri("https://raw.githubusercontent.com/modelcontextprotocol/java-sdk/refs/heads/main/README.md")
-					.retrieve()
-					.body(String.class);
+				RestTemplate restTemplate = new RestTemplate();
+				String response = restTemplate.getForObject(
+						"https://raw.githubusercontent.com/modelcontextprotocol/java-sdk/refs/heads/main/README.md",
+						String.class);
 				assertThat(response).isNotBlank();
 				return callResponse;
 			})
@@ -782,7 +775,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 		McpServerFeatures.SyncToolSpecification tool1 = new McpServerFeatures.SyncToolSpecification(
 				new McpSchema.Tool(
 						"tool1",
-						"tool1 description", emptyJsonSchema),
+						"tool1 description", EMPTY_JSON_SCHEMA),
 				(exchange, request) -> {
 					var threadLocalValue = McpTestServletFilter.getThreadLocalValue();
 					return CallToolResult.builder()
@@ -816,14 +809,13 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 		var callResponse = new McpSchema.CallToolResult(List.of(new McpSchema.TextContent("CALL RESPONSE")), null);
 		McpServerFeatures.SyncToolSpecification tool1 = McpServerFeatures.SyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("tool1", "tool1 description", emptyJsonSchema))
+			.tool(new McpSchema.Tool("tool1", "tool1 description", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 				// perform a blocking call to a remote service
-				String response = RestClient.create()
-					.get()
-					.uri("https://raw.githubusercontent.com/modelcontextprotocol/java-sdk/refs/heads/main/README.md")
-					.retrieve()
-					.body(String.class);
+				RestTemplate restTemplate = new RestTemplate();
+				String response = restTemplate.getForObject(
+						"https://raw.githubusercontent.com/modelcontextprotocol/java-sdk/refs/heads/main/README.md",
+						String.class);
 				assertThat(response).isNotBlank();
 				return callResponse;
 			})
@@ -838,11 +830,10 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 		try (var mcpClient = clientBuilder.toolsChangeConsumer(toolsUpdate -> {
 			// perform a blocking call to a remote service
-			String response = RestClient.create()
-				.get()
-				.uri("https://raw.githubusercontent.com/modelcontextprotocol/java-sdk/refs/heads/main/README.md")
-				.retrieve()
-				.body(String.class);
+			RestTemplate restTemplate = new RestTemplate();
+			String response = restTemplate.getForObject(
+					"https://raw.githubusercontent.com/modelcontextprotocol/java-sdk/refs/heads/main/README.md",
+					String.class);
 			assertThat(response).isNotBlank();
 			rootsRef.set(toolsUpdate);
 		}).build()) {
@@ -867,7 +858,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 			// Add a new tool
 			McpServerFeatures.SyncToolSpecification tool2 = McpServerFeatures.SyncToolSpecification.builder()
-				.tool(new McpSchema.Tool("tool2", "tool2 description", emptyJsonSchema))
+				.tool(new McpSchema.Tool("tool2", "tool2 description", EMPTY_JSON_SCHEMA))
 				.callHandler((exchange, request) -> callResponse)
 				.build();
 
@@ -903,7 +894,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 		// Create server with a tool that sends logging notifications
 		McpServerFeatures.AsyncToolSpecification tool = McpServerFeatures.AsyncToolSpecification.builder()
-			.tool(new McpSchema.Tool("logging-test", "Test logging notifications", emptyJsonSchema))
+			.tool(new McpSchema.Tool("logging-test", "Test logging notifications", EMPTY_JSON_SCHEMA))
 			.callHandler((exchange, request) -> {
 
 				// Create and send notifications with different levels
@@ -1023,7 +1014,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 				McpSchema.Tool.builder()
 					.name("progress-test")
 					.description("Test progress notifications")
-					.inputSchema(emptyJsonSchema)
+					.inputSchema(EMPTY_JSON_SCHEMA)
 					.build(),
 				null, (exchange, request) -> {
 
@@ -1094,7 +1085,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 		AtomicReference<String> executionOrder = new AtomicReference<>("");
 
 		McpServerFeatures.AsyncToolSpecification tool = new McpServerFeatures.AsyncToolSpecification(
-				new McpSchema.Tool("ping-async-test", "Test ping async behavior", emptyJsonSchema),
+				new McpSchema.Tool("ping-async-test", "Test ping async behavior", EMPTY_JSON_SCHEMA),
 				(exchange, request) -> {
 
 					executionOrder.set(executionOrder.get() + "1");
@@ -1199,8 +1190,7 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 			assertThatJson(((McpSchema.TextContent) response.content().get(0)).text()).when(Option.IGNORING_ARRAY_ORDER)
 				.when(Option.IGNORING_EXTRA_ARRAY_ITEMS)
 				.isObject()
-				.isEqualTo(json("""
-						{"result":5.0,"operation":"2 + 3","timestamp":"2024-01-01T10:00:00Z"}"""));
+				.isEqualTo(json("{\"result\":5.0,\"operation\":\"2 + 3\",\"timestamp\":\"2024-01-01T10:00:00Z\"}"));
 
 			// Verify structured content (may be null in sync server but validation still
 			// works)
@@ -1374,13 +1364,17 @@ class HttpServletSseServerTransportProviderIntegrationTests {
 
 	private double evaluateExpression(String expression) {
 		// Simple expression evaluator for testing
-		return switch (expression) {
-			case "2 + 3" -> 5.0;
-			case "10 * 2" -> 20.0;
-			case "7 + 8" -> 15.0;
-			case "5 + 3" -> 8.0;
-			default -> 0.0;
-		};
+		switch (expression) {
+			case "2 + 3":
+				return 5.0;
+			case "10 * 2":
+				return 20.0;
+			case "7 + 8":
+				return 15.0;
+			case "5 + 3":
+				return 8.0;
+			default:
+				return 0.0;
+		}
 	}
-
 }
