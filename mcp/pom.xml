@@ -44,40 +44,33 @@
 					</execution>
 				</executions>
 			</plugin>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<executions>
-					<!-- Default JAR with all sources -->
-					<execution>
-						<id>default-jar</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<archive>
-								<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-							</archive>
-						</configuration>
-					</execution>
-					<!-- Server JAR excluding client package -->
-					<execution>
-						<id>server-jar</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<classifier>server</classifier>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.6.0</version>
+				<configuration>
+					<artifactSet>
+						<excludes>
+							<exclude>org.projectlombok:lombok</exclude>
+						</excludes>
+					</artifactSet>
+					<filters>
+						<filter>
+							<artifact>io.modelcontextprotocol.sdk:*</artifact>
 							<excludes>
 								<exclude>io/modelcontextprotocol/client/**</exclude>
 							</excludes>
-							<archive>
-								<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-							</archive>
-						</configuration>
+						</filter>
+					</filters>
+					<shadedArtifactAttached>true</shadedArtifactAttached>
+					<shadedClassifierName>aem</shadedClassifierName>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
